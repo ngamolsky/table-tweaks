@@ -91,7 +91,6 @@ export function GameDetails() {
       if (!data?.suggestion) throw new Error("No suggestion received");
 
       setAiSuggestion(data.suggestion);
-      setPromptInput("");
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Failed to generate suggestion";
@@ -99,6 +98,21 @@ export function GameDetails() {
       setAiError(message);
     } finally {
       setIsGenerating(false);
+    }
+  }
+
+  function handleSectionOpen(section: "rules" | "examples") {
+    const sectionElement = document.querySelector(`#${section}-section`);
+    if (sectionElement) {
+      setTimeout(() => {
+        sectionElement.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 100); // Small delay to allow expansion animation to start
+    }
+
+    if (section === "rules") {
+      setIsRulesOpen(true);
+    } else {
+      setIsExamplesOpen(true);
     }
   }
 
@@ -143,7 +157,7 @@ export function GameDetails() {
               value={promptInput}
               onChange={(e) => setPromptInput(e.target.value)}
               placeholder="Enter your prompt to extend the game..."
-              className="min-h-[120px]"
+              className="min-h-[120px] placeholder:text-muted-foreground[0.5]"
               disabled={isGenerating}
             />
             <div className="space-y-2">
@@ -232,11 +246,18 @@ export function GameDetails() {
         </CardContent>
       </Card>
 
-      <Collapsible open={isRulesOpen} onOpenChange={setIsRulesOpen}>
-        <Card>
+      <Collapsible
+        open={isRulesOpen}
+        onOpenChange={(open) =>
+          open ? handleSectionOpen("rules") : setIsRulesOpen(false)
+        }
+      >
+        <Card id="rules-section">
           <CardHeader
             className="cursor-pointer"
-            onClick={() => setIsRulesOpen(!isRulesOpen)}
+            onClick={() =>
+              isRulesOpen ? setIsRulesOpen(false) : handleSectionOpen("rules")
+            }
           >
             <div className="flex items-center justify-between">
               <CardTitle>Rules</CardTitle>
@@ -255,11 +276,20 @@ export function GameDetails() {
         </Card>
       </Collapsible>
 
-      <Collapsible open={isExamplesOpen} onOpenChange={setIsExamplesOpen}>
-        <Card>
+      <Collapsible
+        open={isExamplesOpen}
+        onOpenChange={(open) =>
+          open ? handleSectionOpen("examples") : setIsExamplesOpen(false)
+        }
+      >
+        <Card id="examples-section">
           <CardHeader
             className="cursor-pointer"
-            onClick={() => setIsExamplesOpen(!isExamplesOpen)}
+            onClick={() =>
+              isExamplesOpen
+                ? setIsExamplesOpen(false)
+                : handleSectionOpen("examples")
+            }
           >
             <div className="flex items-center justify-between">
               <CardTitle>Examples</CardTitle>
