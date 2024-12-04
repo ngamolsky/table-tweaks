@@ -49,7 +49,7 @@ function GameCard({
   id,
 }: {
   title: string;
-  description: string;
+  description: string | null;
   image: string;
   id: string;
 }) {

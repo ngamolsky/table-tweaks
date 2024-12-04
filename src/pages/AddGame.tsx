@@ -59,6 +59,10 @@ export function AddGame() {
     e.preventDefault();
     setIsSubmitting(true);
 
+    if (!userId) {
+      return <div>You must be logged in to add a game.</div>;
+    }
+
     try {
       const game = await createGame([
         {
@@ -145,13 +149,7 @@ export function AddGame() {
 
           {formState.currentStep === "rules" && game && (
             <div className="space-y-4">
-              <GameImageGrid
-                folder="rules"
-                game={game}
-                onComplete={() => {
-                  // handleInstructionsSubmit();
-                }}
-              />
+              <GameImageGrid folder="rules" game={game} />
               <Button
                 onClick={handleInstructionsSubmit}
                 disabled={isSubmitting}
@@ -164,13 +162,7 @@ export function AddGame() {
 
           {formState.currentStep === "examples" && game && (
             <div className="space-y-4">
-              <GameImageGrid
-                folder="examples"
-                game={game}
-                onComplete={() => {
-                  // handleExemplarsSubmit();
-                }}
-              />
+              <GameImageGrid folder="examples" game={game} />
               <Button
                 onClick={handleExemplarsSubmit}
                 disabled={isSubmitting}
