@@ -9,8 +9,7 @@ Table Tweaks is your personal board game companion - it helps you extend games b
 - **Styling**: Tailwind CSS + Shadcn UI
 - **Backend**: Supabase
 - **Mobile**: Tauri
-- **AI Integration**: OpenAI GPT-4 Vision
-- **Image Processing**: Uppy
+- **AI Integration**: Langchain and OpenAI / Anthropic
 
 
 
