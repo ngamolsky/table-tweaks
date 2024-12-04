@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/lib/supabase";
 import {
   Card,
   CardHeader,
@@ -13,8 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSession } from "@supabase/auth-helpers-react";
 import { GameImageGrid } from "@/components/GameImageGrid";
-import { GameWithImages } from "@/queries/games";
-
+import { useCreateGame } from "@/hooks/useCreateGame";
+import { GameWithImages } from "types/composite.types";
 interface FormState {
   title: string;
   description: string;
@@ -29,7 +28,7 @@ const steps = {
     description: null,
   },
   rules: {
-    title: "Instructions",
+    title: "Rules",
     description: "Take a picture or upload images of the game rules.",
   },
   examples: {
@@ -42,8 +41,8 @@ const steps = {
 export function AddGame() {
   const navigate = useNavigate();
   const session = useSession();
+  const [game, setGame] = useState<GameWithImages>();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [game, setGame] = useState<GameWithImages | null>(null);
   const [formState, setFormState] = useState<FormState>({
     title: "",
     description: "",
@@ -52,6 +51,8 @@ export function AddGame() {
     currentStep: "details",
   });
 
+  const { mutateAsync: createGame } = useCreateGame();
+
   const userId = session?.user?.id;
 
   async function handleDetailsSubmit(e: React.FormEvent) {
@@ -59,18 +60,14 @@ export function AddGame() {
     setIsSubmitting(true);
 
     try {
-      const { data: game, error: gameError } = await supabase
-        .from("games")
-        .insert({
+      const game = await createGame([
+        {
           title: formState.title,
           description: formState.description,
           user_id: userId,
-        })
-        .select()
-        .single();
-
-      if (gameError) throw gameError;
-      setGame(game as GameWithImages);
+        },
+      ]);
+      setGame(game?.[0]);
       setFormState((prev) => ({ ...prev, currentStep: "rules" }));
     } catch (error) {
       console.error("Error creating game:", error);
@@ -146,13 +143,13 @@ export function AddGame() {
             </form>
           )}
 
-          {formState.currentStep === "rules" && game?.id && (
+          {formState.currentStep === "rules" && game && (
             <div className="space-y-4">
               <GameImageGrid
                 folder="rules"
                 game={game}
                 onComplete={() => {
-                  handleInstructionsSubmit();
+                  // handleInstructionsSubmit();
                 }}
               />
               <Button
@@ -165,13 +162,13 @@ export function AddGame() {
             </div>
           )}
 
-          {formState.currentStep === "examples" && game?.id && (
+          {formState.currentStep === "examples" && game && (
             <div className="space-y-4">
               <GameImageGrid
-                folder="example"
+                folder="examples"
                 game={game}
                 onComplete={() => {
-                  handleExemplarsSubmit();
+                  // handleExemplarsSubmit();
                 }}
               />
               <Button

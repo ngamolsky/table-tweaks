@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import { Plus, Wand2, ChevronDown, Minus, AlertCircle } from "lucide-react";
+import { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Plus, Wand2, Minus, AlertCircle, Trash2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,109 +10,114 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
+  CardFooter,
 } from "@/components/ui/card";
-import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
-import { gamesWithImagesQuery, GameWithImages } from "@/queries/games";
 import { GameImageGrid } from "@/components/GameImageGrid";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useCurrentGame } from "@/hooks/useCurrentGame";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useDeleteMutation } from "@supabase-cache-helpers/postgrest-react-query";
 
 export function GameDetails() {
   const { id } = useParams();
-  const [game, setGame] = useState<GameWithImages | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
+
   const [promptInput, setPromptInput] = useState("");
-  const [isRulesOpen, setIsRulesOpen] = useState(false);
-  const [isExamplesOpen, setIsExamplesOpen] = useState(false);
   const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [numSuggestions, setNumSuggestions] = useState(3);
   const [aiError, setAiError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const gameDeleteMutation = useDeleteMutation(
+    supabase.from("games"),
+    ["id"],
+    "id",
+    {
+      onError: (error: Error) => {
+        console.error("Error deleting game:", error);
+      },
+    }
+  );
+  const { data: game, isLoading, error } = useCurrentGame(id!);
+  const [rulesPrompt, setRulesPrompt] = useState("");
+  const [rulesResponse, setRulesResponse] = useState<string | null>(null);
+  const [isAskingRules, setIsAskingRules] = useState(false);
+  const [rulesError, setRulesError] = useState<string | null>(null);
 
-  async function fetchGame() {
+  async function handleAskQuestion(questionType: "rules" | "examples") {
+    const prompt = questionType === "rules" ? rulesPrompt : promptInput;
+    const setLoading =
+      questionType === "rules" ? setIsAskingRules : setIsGenerating;
+    const setError = questionType === "rules" ? setRulesError : setAiError;
+    const setResponse =
+      questionType === "rules" ? setRulesResponse : setAiSuggestion;
+
     try {
+      setLoading(true);
+      setResponse(null);
       setError(null);
-      if (!id) {
-        throw new Error("No game ID provided");
-      }
 
-      console.log("Fetching game", id);
-      const { data, error: supabaseError } = await gamesWithImagesQuery
-        .eq("id", id)
-        .single();
+      if (!id) throw new Error("No game ID provided");
+      if (!prompt.trim()) throw new Error("Please enter a prompt");
 
-      if (supabaseError) throw supabaseError;
-      if (!data) throw new Error("Game not found");
-
-      setGame(data);
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to fetch game";
-      console.error("Error fetching game:", err);
-      setError(message);
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    if (id) {
-      fetchGame();
-    }
-  }, [id]);
-
-  async function handleExtendGame() {
-    try {
-      setIsGenerating(true);
-      setAiSuggestion(null);
-      setAiError(null);
-
-      if (!id) {
-        throw new Error("No game ID provided");
-      }
-
-      if (!promptInput.trim()) {
-        throw new Error("Please enter a prompt");
-      }
-
-      const { data, error: functionError } = await supabase.functions.invoke(
-        "openai",
-        {
-          body: {
-            gameId: id,
-            userPrompt: promptInput,
-            n: numSuggestions,
-          },
-        }
-      );
+      const { data, error: functionError } = await supabase.functions.invoke<{
+        suggestion: string;
+      }>("ask-question", {
+        body: {
+          gameId: id,
+          userPrompt: prompt,
+          questionType,
+          n: questionType === "examples" ? numSuggestions : undefined,
+        },
+      });
 
       if (functionError) throw functionError;
-      if (!data?.suggestion) throw new Error("No suggestion received");
+      if (!data?.suggestion) throw new Error("No response received");
 
-      setAiSuggestion(data.suggestion);
+      setResponse(data.suggestion);
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Failed to generate suggestion";
-      console.error("Error generating suggestion:", err);
-      setAiError(message);
+        err instanceof Error ? err.message : "Failed to get response";
+      console.error(
+        `Error ${
+          questionType === "rules" ? "asking question" : "generating examples"
+        }:`,
+        err
+      );
+      setError(message);
     } finally {
-      setIsGenerating(false);
+      setLoading(false);
     }
   }
 
-  function handleSectionOpen(section: "rules" | "examples") {
-    const sectionElement = document.querySelector(`#${section}-section`);
-    if (sectionElement) {
-      setTimeout(() => {
-        sectionElement.scrollIntoView({ behavior: "smooth", block: "center" });
-      }, 100); // Small delay to allow expansion animation to start
-    }
+  async function handleDeleteGame() {
+    if (!id) return;
 
-    if (section === "rules") {
-      setIsRulesOpen(true);
-    } else {
-      setIsExamplesOpen(true);
+    try {
+      setIsDeleting(true);
+      await gameDeleteMutation.mutateAsync({ id });
+      navigate("/");
+    } catch (err) {
+      console.error("Error deleting game:", err);
+    } finally {
+      setIsDeleting(false);
     }
   }
 
@@ -127,7 +132,7 @@ export function GameDetails() {
       <div className="flex items-center justify-center h-full">
         <Alert variant="destructive" className="max-w-md">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription>{error.message}</AlertDescription>
         </Alert>
       </div>
     );
@@ -145,172 +150,223 @@ export function GameDetails() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
-      <Card>
-        <CardHeader>
-          <CardTitle>{game.title}</CardTitle>
-          <CardDescription>{game.description}</CardDescription>
+    <div className=" mx-auto pb-20 pt-4">
+      <Card className="shadow-sm">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-2xl font-bold">{game.title}</CardTitle>
+          {game.description && (
+            <CardDescription className="text-muted-foreground">
+              {game.description}
+            </CardDescription>
+          )}
         </CardHeader>
+
         <CardContent>
-          <div className="space-y-4">
-            <Textarea
-              value={promptInput}
-              onChange={(e) => setPromptInput(e.target.value)}
-              placeholder="Enter your prompt to extend the game..."
-              className="min-h-[120px] placeholder:text-muted-foreground[0.5]"
-              disabled={isGenerating}
-            />
-            <div className="space-y-2">
-              <label
-                htmlFor="numSuggestions"
-                className="text-sm text-muted-foreground"
-              >
-                Number of suggestions:
-              </label>
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="h-10 w-10 shrink-0"
-                  onClick={() =>
-                    setNumSuggestions(Math.max(0, numSuggestions - 1))
-                  }
-                  disabled={isGenerating || numSuggestions <= 0}
-                >
-                  <Minus className="h-4 w-4" />
-                </Button>
-                <Input
-                  id="numSuggestions"
-                  type="number"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  min="0"
-                  max="5"
-                  value={numSuggestions}
-                  onChange={(e) => setNumSuggestions(Number(e.target.value))}
-                  className="flex-1 text-center"
-                  disabled={isGenerating}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="h-10 w-10 shrink-0"
-                  onClick={() =>
-                    setNumSuggestions(Math.min(5, numSuggestions + 1))
-                  }
-                  disabled={isGenerating || numSuggestions >= 5}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
+          <Accordion type="single" collapsible defaultValue="examples">
+            <AccordionItem value="examples">
+              <AccordionTrigger className="text-lg font-medium">
+                Examples
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-8">
+                  <div className="space-y-4">
+                    <Textarea
+                      value={promptInput}
+                      onChange={(e) => setPromptInput(e.target.value)}
+                      placeholder="Enter your prompt to generate new examples..."
+                      className="min-h-[120px] placeholder:text-muted-foreground/50 focus-visible:ring-0"
+                      disabled={isGenerating}
+                    />
+                    <div className="space-y-2">
+                      <label
+                        htmlFor="numSuggestions"
+                        className="text-sm text-muted-foreground"
+                      >
+                        Number of suggestions:
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          className="h-10 w-10 shrink-0"
+                          onClick={() =>
+                            setNumSuggestions(Math.max(0, numSuggestions - 1))
+                          }
+                          disabled={isGenerating || numSuggestions <= 0}
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                        <Input
+                          id="numSuggestions"
+                          type="number"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          min="0"
+                          max="5"
+                          value={numSuggestions}
+                          onChange={(e) =>
+                            setNumSuggestions(Number(e.target.value))
+                          }
+                          className="flex-1 text-center focus-visible:ring-0 "
+                          disabled={isGenerating}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          className="h-10 w-10 shrink-0"
+                          onClick={() =>
+                            setNumSuggestions(Math.min(5, numSuggestions + 1))
+                          }
+                          disabled={isGenerating || numSuggestions >= 5}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
 
-            <Button
-              onClick={handleExtendGame}
-              className="w-full"
-              disabled={isGenerating || !promptInput.trim()}
-            >
-              {isGenerating ? (
-                <div className="flex items-center">
-                  <div className="animate-spin mr-2 h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
-                  Generating...
+                    <Button
+                      onClick={() => handleAskQuestion("examples")}
+                      className="w-full"
+                      disabled={isGenerating || !promptInput.trim()}
+                    >
+                      {isGenerating ? (
+                        <div className="flex items-center">
+                          <div className="animate-spin mr-2 h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
+                          Generating...
+                        </div>
+                      ) : (
+                        <>
+                          <Wand2 className="h-4 w-4 mr-2" />
+                          Extend Game
+                        </>
+                      )}
+                    </Button>
+
+                    {aiError && (
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>{aiError}</AlertDescription>
+                      </Alert>
+                    )}
+
+                    {aiSuggestion && (
+                      <div className="mt-4 space-y-2">
+                        <h3 className="font-medium">AI Suggestion</h3>
+                        <p className="whitespace-pre-wrap text-sm">
+                          {aiSuggestion}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="font-medium">Game Examples</h3>
+                    <GameImageGrid folder="examples" game={game} />
+                  </div>
                 </div>
-              ) : (
-                <>
-                  <Wand2 className="h-4 w-4 mr-2" />
-                  Extend Game
-                </>
-              )}
-            </Button>
+              </AccordionContent>
+            </AccordionItem>
 
-            {aiError && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{aiError}</AlertDescription>
-              </Alert>
-            )}
+            <AccordionItem value="rules">
+              <AccordionTrigger className="text-lg font-medium">
+                Rules
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-8">
+                  <div className="space-y-4">
+                    <Textarea
+                      value={rulesPrompt}
+                      onChange={(e) => setRulesPrompt(e.target.value)}
+                      placeholder="Ask a question about the rules..."
+                      className="min-h-[120px] placeholder:text-muted-foreground/50 focus-visible:ring-0"
+                      disabled={isAskingRules}
+                    />
+                    <Button
+                      className="w-full"
+                      disabled={isAskingRules || !rulesPrompt.trim()}
+                      onClick={() => handleAskQuestion("rules")}
+                    >
+                      {isAskingRules ? (
+                        <div className="flex items-center">
+                          <div className="animate-spin mr-2 h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
+                          Thinking...
+                        </div>
+                      ) : (
+                        <>
+                          <Wand2 className="h-4 w-4 mr-2" />
+                          Ask Question
+                        </>
+                      )}
+                    </Button>
 
-            {aiSuggestion && (
-              <Card className="mt-4">
-                <CardHeader>
-                  <CardTitle className="text-sm">AI Suggestion</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="whitespace-pre-wrap text-sm">{aiSuggestion}</p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+                    {rulesError && (
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>{rulesError}</AlertDescription>
+                      </Alert>
+                    )}
+
+                    {rulesResponse && (
+                      <div className="mt-4 space-y-2">
+                        <h3 className="font-medium">Answer</h3>
+                        <div className="rounded-lg bg-muted p-4">
+                          <p className="whitespace-pre-wrap text-sm">
+                            {rulesResponse}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="font-medium">Game Rules</h3>
+                    <GameImageGrid folder="rules" game={game} />
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </CardContent>
+
+        <CardFooter className="flex justify-end pt-6">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" disabled={isDeleting}>
+                {isDeleting ? (
+                  <div className="flex items-center">
+                    <div className="animate-spin mr-2 h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
+                    Deleting...
+                  </div>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Game
+                  </>
+                )}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="w-4/5 rounded-lg">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="py-4">
+                  Are you sure?
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete
+                  your game and all associated data.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter className="pb-4">
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeleteGame}>
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </CardFooter>
       </Card>
-
-      <Collapsible
-        open={isRulesOpen}
-        onOpenChange={(open) =>
-          open ? handleSectionOpen("rules") : setIsRulesOpen(false)
-        }
-      >
-        <Card id="rules-section">
-          <CardHeader
-            className="cursor-pointer"
-            onClick={() =>
-              isRulesOpen ? setIsRulesOpen(false) : handleSectionOpen("rules")
-            }
-          >
-            <div className="flex items-center justify-between">
-              <CardTitle>Rules</CardTitle>
-              <ChevronDown
-                className={`h-4 w-4 transition-transform ${
-                  isRulesOpen ? "rotate-180" : ""
-                }`}
-              />
-            </div>
-          </CardHeader>
-          <CollapsibleContent>
-            <CardContent className="space-y-4">
-              <GameImageGrid folder="rules" game={game} onComplete={() => {}} />
-            </CardContent>
-          </CollapsibleContent>
-        </Card>
-      </Collapsible>
-
-      <Collapsible
-        open={isExamplesOpen}
-        onOpenChange={(open) =>
-          open ? handleSectionOpen("examples") : setIsExamplesOpen(false)
-        }
-      >
-        <Card id="examples-section">
-          <CardHeader
-            className="cursor-pointer"
-            onClick={() =>
-              isExamplesOpen
-                ? setIsExamplesOpen(false)
-                : handleSectionOpen("examples")
-            }
-          >
-            <div className="flex items-center justify-between">
-              <CardTitle>Examples</CardTitle>
-              <ChevronDown
-                className={`h-4 w-4 transition-transform ${
-                  isExamplesOpen ? "rotate-180" : ""
-                }`}
-              />
-            </div>
-          </CardHeader>
-          <CollapsibleContent>
-            <CardContent className="space-y-4">
-              <GameImageGrid
-                folder="example"
-                game={game}
-                onComplete={() => {}}
-              />
-            </CardContent>
-          </CollapsibleContent>
-        </Card>
-      </Collapsible>
     </div>
   );
 }

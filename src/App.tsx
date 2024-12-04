@@ -12,6 +12,7 @@ import { AuthModal } from "./components/AuthModal";
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import { AnimatePresence } from "framer-motion";
 import { useSystemTheme } from "@/hooks/useSystemTheme";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 function AppContent() {
   const session = useSession();
@@ -30,6 +31,7 @@ function AppContent() {
         { path: "/games/add", element: <AddGame /> },
         { path: "/games/:id", element: <GameDetails /> },
         { path: "/profile", element: <Profile /> },
+        { path: "*", element: <Home /> },
       ],
     },
   ]);
@@ -121,13 +123,25 @@ function AppContent() {
   return <AnimatePresence mode="wait">{element}</AnimatePresence>;
 }
 
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      staleTime: Infinity,
+      gcTime: Infinity,
+    },
+  },
+});
+
 export function App() {
   useSystemTheme();
 
   return (
     <BrowserRouter>
       <SessionContextProvider supabaseClient={supabase}>
-        <AppContent />
+        <QueryClientProvider client={queryClient}>
+          <AppContent />
+        </QueryClientProvider>
       </SessionContextProvider>
     </BrowserRouter>
   );

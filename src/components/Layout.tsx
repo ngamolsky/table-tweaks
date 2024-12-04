@@ -25,20 +25,20 @@ export function Layout() {
   };
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-background">
-      <div className="flex-none bg-card h-[env(safe-area-inset-top)]" />
-
-      <header className="flex-none bg-card border-b border-border px-4 py-3">
+    <div className="fixed inset-0 flex flex-col ">
+      <header className="flex-none border-b border-border p-4">
         <h1 className="text-lg font-semibold text-foreground">
           {getPageTitle()}
         </h1>
       </header>
 
-      <main className="flex-1 relative overflow-hidden">
+      <main className="flex-1 relative">
         <AnimatePresence mode="wait">
           <PageTransition>
-            <div className="absolute inset-0 overflow-auto pb-[calc(4.5rem+env(safe-area-inset-bottom))] px-4 pt-2 -webkit-overflow-scrolling-touch">
-              <Outlet />
+            <div className="absolute inset-0 ios-scroll pb-[calc(4.5rem+env(safe-area-inset-bottom))]">
+              <div className="min-safe-h p-4">
+                <Outlet />
+              </div>
             </div>
           </PageTransition>
         </AnimatePresence>

@@ -7,33 +7,76 @@ export type Json =
   | Json[]
 
 export type Database = {
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          operationName?: string
+          query?: string
+          variables?: Json
+          extensions?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       example_images: {
         Row: {
+          additional_info: string | null
           created_at: string
+          extracted_content: string | null
+          extracted_pattern: string | null
           game_id: string
           id: string
           image_path: string
+          model_used: Database["public"]["Enums"]["ai_model"] | null
+          processed_at: string | null
+          processing_status: Database["public"]["Enums"]["processing_status"]
           updated_at: string
         }
         Insert: {
+          additional_info?: string | null
           created_at?: string
+          extracted_content?: string | null
+          extracted_pattern?: string | null
           game_id: string
           id?: string
           image_path: string
+          model_used?: Database["public"]["Enums"]["ai_model"] | null
+          processed_at?: string | null
+          processing_status?: Database["public"]["Enums"]["processing_status"]
           updated_at?: string
         }
         Update: {
+          additional_info?: string | null
           created_at?: string
+          extracted_content?: string | null
+          extracted_pattern?: string | null
           game_id?: string
           id?: string
           image_path?: string
+          model_used?: Database["public"]["Enums"]["ai_model"] | null
+          processed_at?: string | null
+          processing_status?: Database["public"]["Enums"]["processing_status"]
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "exemplar_images_game_id_fkey"
+            foreignKeyName: "example_images_game_id_fkey"
             columns: ["game_id"]
             isOneToOne: false
             referencedRelation: "games"
@@ -44,64 +87,100 @@ export type Database = {
       games: {
         Row: {
           created_at: string
-          description: string
+          description: string | null
           id: string
           title: string
           updated_at: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           created_at?: string
-          description: string
+          description?: string | null
           id?: string
           title: string
           updated_at?: string
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           created_at?: string
-          description?: string
+          description?: string | null
           id?: string
           title?: string
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
       rules_images: {
         Row: {
+          additional_info: string | null
           created_at: string
           display_order: number
+          extracted_text: string | null
           game_id: string
           id: string
           image_path: string
+          model_used: Database["public"]["Enums"]["ai_model"] | null
+          processed_at: string | null
+          processing_status: Database["public"]["Enums"]["processing_status"]
           updated_at: string
         }
         Insert: {
+          additional_info?: string | null
           created_at?: string
           display_order: number
+          extracted_text?: string | null
           game_id: string
           id?: string
           image_path: string
+          model_used?: Database["public"]["Enums"]["ai_model"] | null
+          processed_at?: string | null
+          processing_status?: Database["public"]["Enums"]["processing_status"]
           updated_at?: string
         }
         Update: {
+          additional_info?: string | null
           created_at?: string
           display_order?: number
+          extracted_text?: string | null
           game_id?: string
           id?: string
           image_path?: string
+          model_used?: Database["public"]["Enums"]["ai_model"] | null
+          processed_at?: string | null
+          processing_status?: Database["public"]["Enums"]["processing_status"]
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "instruction_images_game_id_fkey"
+            foreignKeyName: "rules_images_game_id_fkey"
             columns: ["game_id"]
             isOneToOne: false
             referencedRelation: "games"
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_preferences: {
+        Row: {
+          ai_model: Database["public"]["Enums"]["ai_model"] | null
+          created_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_model?: Database["public"]["Enums"]["ai_model"] | null
+          created_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_model?: Database["public"]["Enums"]["ai_model"] | null
+          created_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {
@@ -111,7 +190,12 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      ai_model:
+        | "openai__gpt-4o-mini"
+        | "openai__gpt-4o-2024-11-20"
+        | "anthropic__claude-3-5-sonnet-20241022"
+        | "anthropic__claude-3-haiku-20240307"
+      processing_status: "pending" | "processing" | "completed" | "error"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -215,3 +299,4 @@ export type CompositeTypes<
   : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
     ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
+

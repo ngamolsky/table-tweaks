@@ -1,61 +1,21 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Plus } from "lucide-react";
-import { supabase } from "@/lib/supabase";
-import { Tables } from "../../types/database.types";
 import { OptimizedImage } from "@/components/OptimizedImage";
-
-type Game = Tables<"games"> & {
-  rules_images: Tables<"rules_images">[];
-  example_images: Tables<"example_images">[];
-};
+import { useSession } from "@supabase/auth-helpers-react";
+import { useUserGames } from "@/hooks/useUserGames";
 
 export function Home() {
-  const [games, setGames] = useState<Game[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchGames() {
-      try {
-        const { data, error } = await supabase
-          .from("games")
-          .select(
-            `
-            *,
-            rules_images (
-              id,
-              image_path,
-              display_order
-            ),
-            example_images (
-              id,
-              image_path  
-            )
-          `
-          )
-          .returns<Game[]>()
-          .order("created_at", { ascending: false });
-
-        if (error) throw error;
-        setGames(data || []);
-      } catch (error) {
-        console.error("Error fetching games:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchGames();
-  }, []);
+  const session = useSession();
+  const { data: games, isLoading } = useUserGames(session?.user.id || "");
 
   return (
     <div className="space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
         {isLoading ? (
           <div className="text-foreground">Loading...</div>
         ) : (
           <>
-            {games.map((game) => (
+            {games?.map((game) => (
               <GameCard
                 key={game.id}
                 title={game.title}
@@ -100,6 +60,7 @@ function GameCard({
           imagePath={image}
           alt={title}
           className="w-full h-40 object-cover"
+          priority={true}
         />
         <div className="p-4">
           <h3 className="text-lg font-semibold text-card-foreground">
