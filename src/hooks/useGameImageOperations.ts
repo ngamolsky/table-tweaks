@@ -29,19 +29,22 @@ interface StorageResult {
     };
 }
 
-interface UploadingFiles {
-    [fileName: string]: boolean;
-}
-
 interface DeletingFiles {
     [filePath: string]: boolean;
+}
+
+interface PendingUpload {
+    id: string;
+    file: File;
+    previewUrl: string;
+    status: "uploading" | "complete" | "error";
 }
 
 export function useGameImageOperations(
     { folder, bucketName, userId, gameId, gameName }: FileOperationsOptions,
 ) {
-    const [uploadingFiles, setUploadingFiles] = useState<UploadingFiles>({});
     const [deletingFiles, setDeletingFiles] = useState<DeletingFiles>({});
+    const [pendingUploads, setPendingUploads] = useState<PendingUpload[]>([]);
 
     const { mutateAsync: upload } = useUpload(
         supabase.storage.from(bucketName),
@@ -175,12 +178,15 @@ export function useGameImageOperations(
     const addFiles = async (
         files: Array<File>,
     ) => {
-        // Set uploading state for each file
-        const newUploadingFiles = files.reduce((acc, file) => {
-            acc[file.name] = true;
-            return acc;
-        }, {} as UploadingFiles);
-        setUploadingFiles(newUploadingFiles);
+        // Create preview URLs and add to pending uploads immediately
+        const newPendingUploads = files.map((file) => ({
+            id: uuidv4(),
+            file,
+            previewUrl: URL.createObjectURL(file),
+            status: "uploading" as const,
+        }));
+
+        setPendingUploads((prev) => [...prev, ...newPendingUploads]);
 
         try {
             const uploadResults = await uploadToStorage(files);
@@ -215,13 +221,22 @@ export function useGameImageOperations(
                 data = await exampleImagesMutation.mutateAsync(dbRecords);
             }
 
+            // Clean up pending uploads
+            setPendingUploads([]);
+
             return {
                 data,
                 failedUploads: uploadResults.filter((result) => result.error),
             };
-        } finally {
-            // Clear uploading state
-            setUploadingFiles({});
+        } catch (error) {
+            // Update pending uploads with error state
+            setPendingUploads((prev) =>
+                prev.map((upload) => ({
+                    ...upload,
+                    status: "error",
+                }))
+            );
+            throw error;
         }
     };
 
@@ -270,10 +285,10 @@ export function useGameImageOperations(
     return {
         addFiles,
         deleteFiles,
-        isUploading: Object.keys(uploadingFiles).length > 0,
+        isUploading: pendingUploads.length > 0,
         isDeleting: Object.keys(deletingFiles).length > 0,
-        uploadingFiles,
         deletingFiles,
+        pendingUploads,
         isError: rulesImagesMutation.isError || exampleImagesMutation.isError ||
             rulesImagesDeleteMutation.isError ||
             exampleImagesDeleteMutation.isError,

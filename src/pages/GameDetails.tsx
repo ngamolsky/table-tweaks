@@ -162,7 +162,66 @@ export function GameDetails() {
         </CardHeader>
 
         <CardContent>
-          <Accordion type="single" collapsible defaultValue="examples">
+          <Accordion type="single" collapsible defaultValue="rules">
+            <AccordionItem value="rules">
+              <AccordionTrigger className="text-lg font-medium">
+                Rules
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-8">
+                  <div className="space-y-4">
+                    <Textarea
+                      value={rulesPrompt}
+                      onChange={(e) => setRulesPrompt(e.target.value)}
+                      placeholder="Ask a question about the rules..."
+                      className="min-h-[120px] placeholder:text-muted-foreground/50 focus-visible:ring-0"
+                      disabled={isAskingRules}
+                    />
+                    <Button
+                      className="w-full"
+                      disabled={isAskingRules || !rulesPrompt.trim()}
+                      onClick={() => handleAskQuestion("rules")}
+                    >
+                      {isAskingRules ? (
+                        <div className="flex items-center">
+                          <div className="animate-spin mr-2 h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
+                          Thinking...
+                        </div>
+                      ) : (
+                        <>
+                          <Wand2 className="h-4 w-4 mr-2" />
+                          Ask Question
+                        </>
+                      )}
+                    </Button>
+
+                    {rulesError && (
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>{rulesError}</AlertDescription>
+                      </Alert>
+                    )}
+
+                    {rulesResponse && (
+                      <div className="mt-4 space-y-2">
+                        <h3 className="font-medium">Answer</h3>
+                        <div className="rounded-lg bg-muted p-4">
+                          <p className="whitespace-pre-wrap text-sm">
+                            {rulesResponse}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="font-medium">Game Rules</h3>
+                    <GameImageGrid folder="rules" game={game} />
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
             <AccordionItem value="examples">
               <AccordionTrigger className="text-lg font-medium">
                 Examples
@@ -264,65 +323,6 @@ export function GameDetails() {
                   <div className="space-y-3">
                     <h3 className="font-medium">Game Examples</h3>
                     <GameImageGrid folder="examples" game={game} />
-                  </div>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-
-            <AccordionItem value="rules">
-              <AccordionTrigger className="text-lg font-medium">
-                Rules
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="space-y-8">
-                  <div className="space-y-4">
-                    <Textarea
-                      value={rulesPrompt}
-                      onChange={(e) => setRulesPrompt(e.target.value)}
-                      placeholder="Ask a question about the rules..."
-                      className="min-h-[120px] placeholder:text-muted-foreground/50 focus-visible:ring-0"
-                      disabled={isAskingRules}
-                    />
-                    <Button
-                      className="w-full"
-                      disabled={isAskingRules || !rulesPrompt.trim()}
-                      onClick={() => handleAskQuestion("rules")}
-                    >
-                      {isAskingRules ? (
-                        <div className="flex items-center">
-                          <div className="animate-spin mr-2 h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
-                          Thinking...
-                        </div>
-                      ) : (
-                        <>
-                          <Wand2 className="h-4 w-4 mr-2" />
-                          Ask Question
-                        </>
-                      )}
-                    </Button>
-
-                    {rulesError && (
-                      <Alert variant="destructive">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertDescription>{rulesError}</AlertDescription>
-                      </Alert>
-                    )}
-
-                    {rulesResponse && (
-                      <div className="mt-4 space-y-2">
-                        <h3 className="font-medium">Answer</h3>
-                        <div className="rounded-lg bg-muted p-4">
-                          <p className="whitespace-pre-wrap text-sm">
-                            {rulesResponse}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="space-y-3">
-                    <h3 className="font-medium">Game Rules</h3>
-                    <GameImageGrid folder="rules" game={game} />
                   </div>
                 </div>
               </AccordionContent>

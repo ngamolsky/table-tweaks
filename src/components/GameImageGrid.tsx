@@ -33,7 +33,7 @@ export function GameImageGrid({
     throw new Error("User ID is required");
   }
 
-  const { addFiles, deleteFiles, deletingFiles, uploadingFiles } =
+  const { addFiles, deleteFiles, deletingFiles, pendingUploads } =
     useGameImageOperations({
       folder,
       bucketName: import.meta.env.VITE_GAME_ASSETS_BUCKET,
@@ -76,24 +76,38 @@ export function GameImageGrid({
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      {/* Pending Uploads */}
+      {pendingUploads.map((pending) => (
+        <div
+          key={pending.id}
+          className="relative aspect-square overflow-hidden rounded-lg border animate-pulse"
+        >
+          <img
+            src={pending.previewUrl}
+            alt="Uploading..."
+            className="object-cover w-full h-full opacity-50"
+          />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        </div>
+      ))}
+
       {/* Existing Images */}
       {images.map((image) => {
-        const isFilePending =
-          uploadingFiles[image.image_path] || deletingFiles[image.image_path];
+        const isDeleting = deletingFiles[image.image_path];
         return (
           <Dialog key={image.id}>
             <DialogTrigger asChild>
               <div
                 className={`relative aspect-square group cursor-pointer overflow-hidden rounded-lg border
-              ${
-                deletingFiles[image.image_path] ? "animate-pulse bg-muted" : ""
-              }`}
+              ${isDeleting ? "animate-pulse bg-muted" : ""}`}
               >
                 <OptimizedImage
                   imagePath={image.image_path}
                   alt={`${folder} image`}
                   className={`object-cover w-full h-full ${
-                    isFilePending ? "opacity-50" : ""
+                    isDeleting ? "opacity-50" : ""
                   }`}
                 />
                 <Button
@@ -104,7 +118,7 @@ export function GameImageGrid({
                     e.stopPropagation();
                     handleDelete(image.image_path, image.id);
                   }}
-                  disabled={isFilePending}
+                  disabled={isDeleting}
                 >
                   <Trash2 className="h-4 w-4 text-white" />
                 </Button>
