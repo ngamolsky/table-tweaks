@@ -7,6 +7,8 @@ interface OptimizedImageProps
   imagePath: string;
   fallbackSize?: "sm" | "md" | "lg";
   priority?: boolean;
+  previewUrl?: string;
+  status: "uploading" | "deleting" | "complete" | "error";
 }
 
 export function OptimizedImage({
@@ -15,6 +17,8 @@ export function OptimizedImage({
   alt,
   fallbackSize = "md",
   priority = false,
+  previewUrl,
+  status = "complete",
   ...props
 }: OptimizedImageProps) {
   const {
@@ -27,8 +31,11 @@ export function OptimizedImage({
     "private",
     {
       expiresIn: 3600,
+      enabled: status === "complete",
     }
   );
+
+  console.log("url", url);
 
   const fallbackSizes = {
     sm: "h-4 w-4",
@@ -36,7 +43,7 @@ export function OptimizedImage({
     lg: "h-8 w-8",
   };
 
-  if (isLoading || error || !url) {
+  if ((isLoading || error || !url) && !previewUrl) {
     return (
       <div
         className={cn("flex items-center justify-center bg-muted", className)}
@@ -48,11 +55,13 @@ export function OptimizedImage({
     );
   }
 
+  const displayUrl = url ?? previewUrl;
+
   return (
     <img
-      src={url}
+      src={displayUrl}
       alt={alt}
-      className={className}
+      className={cn(className, status !== "complete" && "opacity-50")}
       loading={priority ? "eager" : "lazy"}
       decoding={priority ? "sync" : "async"}
       {...props}

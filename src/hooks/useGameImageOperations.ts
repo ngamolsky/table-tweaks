@@ -9,13 +9,20 @@ import {
 import { supabase } from "@/lib/supabase";
 import { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
-
+interface ImageItem {
+    id: string;
+    imagePath: string;
+    status: "uploading" | "deleting" | "complete" | "error";
+    previewUrl?: string;
+    error?: Error;
+}
 interface FileOperationsOptions {
     folder: "rules" | "examples";
     bucketName: string;
     userId: string;
     gameId: string;
     gameName: string;
+    initialImages?: ImageItem[];
 }
 
 interface FileUploadResult {
@@ -23,28 +30,11 @@ interface FileUploadResult {
     error?: Error;
 }
 
-interface StorageResult {
-    error?: {
-        message: string;
-    };
-}
-
-interface DeletingFiles {
-    [filePath: string]: boolean;
-}
-
-interface PendingUpload {
-    id: string;
-    file: File;
-    previewUrl: string;
-    status: "uploading" | "complete" | "error";
-}
-
 export function useGameImageOperations(
-    { folder, bucketName, userId, gameId, gameName }: FileOperationsOptions,
+    { folder, bucketName, userId, gameId, gameName, initialImages }:
+        FileOperationsOptions,
 ) {
-    const [deletingFiles, setDeletingFiles] = useState<DeletingFiles>({});
-    const [pendingUploads, setPendingUploads] = useState<PendingUpload[]>([]);
+    const [images, setImages] = useState<ImageItem[]>(initialImages || []);
 
     const { mutateAsync: upload } = useUpload(
         supabase.storage.from(bucketName),
@@ -153,7 +143,8 @@ export function useGameImageOperations(
                 "-",
             );
 
-            console.log("filesWithPaths", filesWithPaths);
+            // Add artificial delay for testing
+            await new Promise((resolve) => setTimeout(resolve, 3000));
             const results = await upload({
                 files: filesWithPaths.map((f) => f.file),
                 path: `user.${userId}/game.${safeGameName}.${gameId}/${folder}`,
@@ -178,19 +169,18 @@ export function useGameImageOperations(
     const addFiles = async (
         files: Array<File>,
     ) => {
-        // Create preview URLs and add to pending uploads immediately
-        const newPendingUploads = files.map((file) => ({
+        // Create temporary entries for uploading files
+        const uploadingImages = files.map((file) => ({
             id: uuidv4(),
-            file,
-            previewUrl: URL.createObjectURL(file),
+            imagePath: "",
             status: "uploading" as const,
+            previewUrl: URL.createObjectURL(file),
         }));
 
-        setPendingUploads((prev) => [...prev, ...newPendingUploads]);
+        setImages((prev) => [...prev, ...uploadingImages]);
 
         try {
             const uploadResults = await uploadToStorage(files);
-
             const successfulUploads = uploadResults.filter((result) =>
                 !result.error
             );
@@ -199,9 +189,10 @@ export function useGameImageOperations(
                 throw new Error("No files were successfully uploaded");
             }
 
-            // Insert into database with appropriate mutation
             let data;
+
             if (folder === "rules") {
+                // Insert into database
                 const dbRecords = successfulUploads.map((
                     { imagePath },
                     index,
@@ -210,6 +201,7 @@ export function useGameImageOperations(
                     image_path: imagePath,
                     display_order: index,
                 }));
+
                 data = await rulesImagesMutation.mutateAsync(dbRecords);
             } else {
                 const dbRecords = successfulUploads.map((
@@ -221,79 +213,86 @@ export function useGameImageOperations(
                 data = await exampleImagesMutation.mutateAsync(dbRecords);
             }
 
-            // Clean up pending uploads
-            setPendingUploads([]);
+            // Update images with completed status
+            setImages((prev) => {
+                const newImages = [...prev];
+                uploadingImages.forEach((uploadingImage, index) => {
+                    const result = uploadResults[index];
+                    const imageIndex = newImages.findIndex((img) =>
+                        img.id === uploadingImage.id
+                    );
+
+                    if (imageIndex !== -1) {
+                        newImages[imageIndex] = {
+                            ...uploadingImage,
+                            id: data?.[index].id, // Use the DB-generated ID
+                            imagePath: result.imagePath,
+                            status: result.error ? "error" : "complete",
+                            error: result.error,
+                        };
+                    }
+                });
+                return newImages;
+            });
 
             return {
                 data,
                 failedUploads: uploadResults.filter((result) => result.error),
             };
         } catch (error) {
-            // Update pending uploads with error state
-            setPendingUploads((prev) =>
-                prev.map((upload) => ({
-                    ...upload,
-                    status: "error",
-                }))
+            // Mark failed uploads
+            setImages((prev) =>
+                prev.map((img) =>
+                    uploadingImages.some((u) => u.id === img.id)
+                        ? { ...img, status: "error", error: error as Error }
+                        : img
+                )
             );
             throw error;
         }
     };
 
     const deleteFiles = async (filePaths: string[], imageIds: string[]) => {
-        // Set deleting state for each file path
-        const newDeletingFiles = filePaths.reduce((acc, path) => {
-            acc[path] = true;
-            return acc;
-        }, {} as DeletingFiles);
-        setDeletingFiles(newDeletingFiles);
+        // Mark images as deleting
+        setImages((prev) =>
+            prev.map((img) =>
+                imageIds.includes(img.id) ? { ...img, status: "deleting" } : img
+            )
+        );
 
         try {
-            console.log("imageIds", imageIds);
+            const storageResults = await remove(filePaths);
 
-            // Delete from storage
-            const storageResults = (await remove(
-                filePaths.map((path) => path),
-            )) as StorageResult[];
-
-            const successfulDeletes = storageResults.filter((result) =>
-                !result.error
-            );
-
-            if (successfulDeletes.length === 0) {
+            if (storageResults.length === 0) {
                 throw new Error("No files were successfully deleted");
             }
 
-            // Delete from database
             const mutation = folder === "rules"
                 ? rulesImagesDeleteMutation
                 : exampleImagesDeleteMutation;
 
-            await mutation.mutateAsync(
-                imageIds.map((id) => ({ id })),
-            );
+            await mutation.mutateAsync(imageIds.map((id) => ({ id })));
 
-            return {
-                failedDeletes: [],
-            };
-        } finally {
-            // Clear deleting state
-            setDeletingFiles({});
+            // Remove deleted images from state
+            setImages((prev) =>
+                prev.filter((img) => !imageIds.includes(img.id))
+            );
+        } catch (error) {
+            // Revert status on error
+            setImages((prev) =>
+                prev.map((img) =>
+                    imageIds.includes(img.id)
+                        ? { ...img, status: "error", error: error as Error }
+                        : img
+                )
+            );
+            throw error;
         }
     };
 
     return {
+        images,
         addFiles,
         deleteFiles,
-        isUploading: pendingUploads.length > 0,
-        isDeleting: Object.keys(deletingFiles).length > 0,
-        deletingFiles,
-        pendingUploads,
-        isError: rulesImagesMutation.isError || exampleImagesMutation.isError ||
-            rulesImagesDeleteMutation.isError ||
-            exampleImagesDeleteMutation.isError,
-        error: rulesImagesMutation.error || exampleImagesMutation.error ||
-            rulesImagesDeleteMutation.error ||
-            exampleImagesDeleteMutation.error,
     };
 }

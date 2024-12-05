@@ -1,6 +1,5 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ImageIcon, Trash2 } from "lucide-react";
+import { ImageIcon, Trash2, AlertCircle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -8,9 +7,10 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { OptimizedImage } from "@/components/OptimizedImage";
-import { useSession } from "@supabase/auth-helpers-react";
 import { GameWithImages } from "types/composite.types";
 import { useGameImageOperations } from "@/hooks/useGameImageOperations";
+import { cn } from "@/lib/utils";
+import { useSession } from "@supabase/auth-helpers-react";
 
 interface GameImageGridProps {
   folder: "rules" | "examples";
@@ -23,120 +23,84 @@ export function GameImageGrid({
   game,
   allowMultiple = true,
 }: GameImageGridProps) {
-  const [images, setImages] = useState(
-    folder === "rules" ? game.rules_images : game.example_images
-  );
   const session = useSession();
   const userId = session?.user?.id;
 
-  if (!userId) {
-    throw new Error("User ID is required");
-  }
-
-  const { addFiles, deleteFiles, deletingFiles, pendingUploads } =
-    useGameImageOperations({
-      folder,
-      bucketName: import.meta.env.VITE_GAME_ASSETS_BUCKET,
-      userId,
-      gameId: game.id,
-      gameName: game.title,
-    });
-
-  // Handle image deletion
-  async function handleDelete(imagePath: string, imageId: string) {
-    try {
-      await deleteFiles([imagePath], [imageId]);
-      // Remove from UI
-      setImages(
-        (prev) => prev.filter((img) => img.id !== imageId) as typeof prev
-      );
-    } catch (error) {
-      console.error(`Error deleting ${folder} image:`, error);
-    }
-  }
-
-  // Updated file upload handler
-  async function handleFileUpload(files: FileList) {
-    const fileArray = Array.from(files);
-
-    try {
-      const { data, failedUploads } = await addFiles(fileArray);
-
-      if (data) {
-        setImages((prev) => [...prev, ...data]);
-      }
-
-      if (failedUploads.length > 0) {
-        console.error("Some uploads failed:", failedUploads);
-      }
-    } catch (error) {
-      console.error("Upload error:", error);
-    }
-  }
+  const { images, addFiles, deleteFiles } = useGameImageOperations({
+    folder,
+    bucketName: import.meta.env.VITE_GAME_ASSETS_BUCKET,
+    userId: userId!,
+    gameId: game.id,
+    gameName: game.title,
+    initialImages:
+      folder === "rules"
+        ? game.rules_images.map((img) => ({
+            id: img.id,
+            imagePath: img.image_path,
+            status: "complete" as const,
+          }))
+        : game.example_images.map((img) => ({
+            id: img.id,
+            imagePath: img.image_path,
+            status: "complete" as const,
+          })),
+  });
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-      {/* Pending Uploads */}
-      {pendingUploads.map((pending) => (
-        <div
-          key={pending.id}
-          className="relative aspect-square overflow-hidden rounded-lg border animate-pulse"
-        >
-          <img
-            src={pending.previewUrl}
-            alt="Uploading..."
-            className="object-cover w-full h-full opacity-50"
-          />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          </div>
-        </div>
-      ))}
-
-      {/* Existing Images */}
-      {images.map((image) => {
-        const isDeleting = deletingFiles[image.image_path];
-        return (
-          <Dialog key={image.id}>
-            <DialogTrigger asChild>
-              <div
-                className={`relative aspect-square group cursor-pointer overflow-hidden rounded-lg border
-              ${isDeleting ? "animate-pulse bg-muted" : ""}`}
-              >
-                <OptimizedImage
-                  imagePath={image.image_path}
-                  alt={`${folder} image`}
-                  className={`object-cover w-full h-full ${
-                    isDeleting ? "opacity-50" : ""
-                  }`}
-                />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute top-2 right-2 bg-black/20"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDelete(image.image_path, image.id);
-                  }}
-                  disabled={isDeleting}
-                >
-                  <Trash2 className="h-4 w-4 text-white" />
-                </Button>
-              </div>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl">
-              <DialogTitle>
-                {folder === "rules" ? "Game Rule" : "Game Example"}
-              </DialogTitle>
+      {images.map((image) => (
+        <Dialog key={image.id}>
+          <DialogTrigger asChild>
+            <div
+              className={cn(
+                "relative aspect-square group cursor-pointer overflow-hidden rounded-lg border",
+                image.status !== "complete" && "animate-pulse bg-muted"
+              )}
+            >
+              {/* Show preview during upload */}
               <OptimizedImage
-                imagePath={image.image_path}
+                imagePath={image.imagePath}
                 alt={`${folder} image`}
-                className="w-full h-auto"
+                className="object-cover w-full h-full"
+                previewUrl={image.previewUrl}
+                status={image.status}
               />
-            </DialogContent>
-          </Dialog>
-        );
-      })}
+
+              {/* Error indicator */}
+              {image.status === "error" && (
+                <div className="absolute inset-0 flex items-center justify-center bg-red-500/20">
+                  <AlertCircle className="h-8 w-8 text-red-500" />
+                </div>
+              )}
+
+              {/* Delete button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-2 right-2 bg-black/20"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  deleteFiles([image.imagePath], [image.id]);
+                }}
+                disabled={image.status !== "complete"}
+              >
+                <Trash2 className="h-4 w-4 text-white" />
+              </Button>
+            </div>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl p-8">
+            <DialogTitle>
+              {folder === "rules" ? "Game Rule" : "Game Example"}
+            </DialogTitle>
+            <OptimizedImage
+              imagePath={image.imagePath}
+              alt={`${folder} image`}
+              className="w-full h-auto"
+              status={image.status}
+            />
+          </DialogContent>
+        </Dialog>
+      ))}
 
       {/* Upload Button */}
       <Button
@@ -149,7 +113,7 @@ export function GameImageGrid({
           input.multiple = allowMultiple;
           input.onchange = (e) => {
             const files = (e.target as HTMLInputElement).files;
-            if (files) handleFileUpload(files);
+            if (files) addFiles(Array.from(files));
           };
           input.click();
         }}
