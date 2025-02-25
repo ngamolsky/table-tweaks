@@ -18,13 +18,6 @@ function DetailsStep() {
 
   return (
     <form className="space-y-6 w-full">
-      {gameData.processingStatus === "processing" && (
-        <div className="bg-muted rounded-lg p-4 flex items-center gap-2">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          <p className="text-sm">Processing your game rules...</p>
-        </div>
-      )}
-
       {gameData.processingStatus === "error" && (
         <div className="bg-destructive/10 text-destructive rounded-lg p-4">
           <p className="text-sm">

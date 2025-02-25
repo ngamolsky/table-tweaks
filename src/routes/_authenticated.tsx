@@ -15,7 +15,7 @@ const Layout = () => {
       </div>
 
       <main className="flex-1 relative z-0">
-        <div className="absolute inset-0 overflow-hidden pb-20">
+        <div className="absolute inset-0 overflow-hidden">
           <div className="container mx-auto px-4 py-4 h-full overflow-y-auto">
             <AnimatePresence mode="wait" initial={false}>
               <PageTransition>
