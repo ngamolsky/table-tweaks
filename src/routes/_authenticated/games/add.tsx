@@ -10,10 +10,7 @@ import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import {
-  GameCreateProvider,
-  useGameCreate,
-} from "@/contexts/GameCreateContext";
+import { GameCreateProvider, useGameCreate } from "@/contexts/GameCreateContext";
 import { useLoggedInUser } from "@/hooks/useLoggedInUser";
 import { supabase } from "@/lib/supabase";
 
@@ -216,6 +213,8 @@ function AddGame() {
   );
 }
 
+// Create a wrapper component that provides the context
+// This component won't be remounted during transitions between child routes
 function AddGameRoot() {
   return (
     <GameCreateProvider>

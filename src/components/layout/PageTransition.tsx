@@ -50,6 +50,13 @@ export function PageTransition({ children }: PageTransitionProps) {
   const previousPathname = useRef(location.pathname);
   const direction = getDirection(location.pathname, previousPathname.current);
 
+  // Check if the current path is in the add game flow to preserve context
+  const isAddGameFlow = location.pathname.includes('/games/add');
+  
+  // Use a stable key for add game flow pages to prevent remounting
+  // For other pages, use the pathname to allow normal transitions
+  const transitionKey = isAddGameFlow ? 'games-add-flow' : location.pathname;
+
   useEffect(() => {
     previousPathname.current = location.pathname;
   }, [location.pathname]);
@@ -113,7 +120,7 @@ export function PageTransition({ children }: PageTransitionProps) {
 
   return (
     <motion.div
-      key={location.pathname}
+      key={transitionKey}
       custom={direction}
       variants={variants}
       initial="enter"
