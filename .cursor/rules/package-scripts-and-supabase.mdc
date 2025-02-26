@@ -1,0 +1,67 @@
+---
+description: Package Scripts and Supabase Commands
+globs: *
+---
+ # Package Scripts and Supabase Commands
+
+## Package.json Scripts
+
+These are the available scripts in the project's package.json file:
+
+### Development Scripts
+- `npm run dev` or `pnpm dev`: Start the Vite development server
+- `npm run build` or `pnpm build`: Build the TypeScript project and create a production build
+- `npm run preview` or `pnpm preview`: Preview the production build locally
+
+### Tauri Scripts
+- `npm run tauri` or `pnpm tauri`: Run Tauri CLI commands
+- `npm run ios:dev` or `pnpm ios:dev`: Run the app in iOS simulator (iPhone 16)
+- `npm run ios:build` or `pnpm ios:build`: Build the iOS app for App Store Connect
+- `npm run ios:upload` or `pnpm ios:upload`: Upload the built iOS app to App Store Connect
+
+### Supabase Scripts
+- `npm run gen-types` or `pnpm gen-types`: Generate TypeScript types from Supabase schema
+- `npm run supabase:start` or `pnpm supabase:start`: Start the local Supabase development environment
+- `npm run supabase:stop` or `pnpm supabase:stop`: Stop the local Supabase development environment
+- `npm run functions` or `pnpm functions`: Serve Supabase Edge Functions locally
+- `npm run functions:deploy` or `pnpm functions:deploy`: Deploy the OpenAI function to Supabase
+
+## Supabase CLI Commands
+
+### General Commands
+- `supabase init`: Initialize a new Supabase project
+- `supabase start`: Start the local Supabase development environment
+- `supabase stop`: Stop the local Supabase development environment
+- `supabase status`: Check the status of the local Supabase services
+
+### Database Commands
+- `supabase db reset`: Reset the local database to its initial state
+- `supabase db push`: Push local migrations to the remote database
+- `supabase db pull`: Pull the remote database schema to local migrations
+- `supabase db diff`: Generate a migration by diffing the local database against the remote
+- `supabase db lint`: Check your database schema for errors
+- `supabase migration new <name>`: Create a new migration file
+- `supabase migration list`: List all migrations
+
+### Types Generation
+- `supabase gen types typescript --local > ./src/types/database.types.ts`: Generate TypeScript types from the local database schema
+- `supabase gen types typescript --project-id <project-id> > ./src/types/database.types.ts`: Generate TypeScript types from a remote project
+
+### Edge Functions
+- `supabase functions new <function-name>`: Create a new Edge Function
+- `supabase functions serve`: Serve Edge Functions locally
+- `supabase functions deploy <function-name>`: Deploy an Edge Function
+- `supabase functions delete <function-name>`: Delete an Edge Function
+
+### Authentication
+- `supabase login`: Log in to the Supabase CLI
+- `supabase link --project-ref <project-id>`: Link to a Supabase project
+
+### Secrets and Environment Variables
+- `supabase secrets list`: List all secrets
+- `supabase secrets set KEY=VALUE`: Set a secret
+- `supabase secrets unset KEY`: Unset a secret
+
+## Supabase Cache Helpers with React Query
+
+This project uses Supabase Cache Helpers with React Query for data fetching. See the `supabase-cache-helpers.mdc` file for detailed documentation on how to use these helpers.

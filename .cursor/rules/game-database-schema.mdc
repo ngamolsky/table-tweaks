@@ -1,0 +1,136 @@
+---
+description: Game Database Schema
+globs: 
+---
+# Game Database Schema
+
+Documentation for the game database schema and related types.
+
+<rule>
+name: game_database_schema
+description: Information about the game database schema and related types in Supabase
+
+You can always find types in [database.types.ts](mdc:src/types/database.types.ts)
+
+filters:
+  - type: file_path
+    pattern: "src/types/database.types.ts"
+  - type: content
+    pattern: "Tables<\"games\">"
+  - type: content
+    pattern: "game_images|game_rules|games"
+
+actions:
+  - type: suggest
+    message: |
+      ## Game Database Schema
+
+      The database schema for games and related tables in Supabase.
+
+      ### Main Tables
+
+      #### games
+      ```typescript
+      type Game = {
+        id: string;
+        name: string;
+        author_id: string;
+        description: string | null;
+        estimated_time: string | null;
+        weight: number | null;
+        status: "draft" | "published" | "archived" | "under_review";
+        cover_image_id: string | null;
+        created_at: string;
+        updated_at: string;
+      }
+      ```
+
+      #### game_images
+      ```typescript
+      type GameImage = {
+        id: string;
+        game_id: string;
+        image_url: string;
+        image_type: "rules" | "cover" | "component" | "game_state" | "other";
+        is_cover: boolean | null;
+        uploader_id: string;
+        uploaded_at: string;
+      }
+      ```
+
+      #### game_rules
+      ```typescript
+      type GameRule = {
+        id: string;
+        game_id: string;
+        raw_text: string | null;
+        structured_content: Json | null;
+        processing_status: "pending" | "processing" | "completed" | "error" | null;
+        processed_at: string | null;
+        created_at: string | null;
+        updated_at: string | null;
+      }
+      ```
+
+      ### Relationships
+
+      - A game can have many game_images
+      - A game can have many game_rules
+      - A game can have one cover_image (from game_images)
+
+      ### Type Usage
+
+      ```typescript
+      import { Tables, TablesInsert, TablesUpdate } from "src/types/database.types";
+
+      // Table row types
+      type Game = Tables<"games">;
+      type GameImage = Tables<"game_images">;
+      type GameRule = Tables<"game_rules">;
+
+      // Insert types
+      type GameInsert = TablesInsert<"games">;
+      type GameImageInsert = TablesInsert<"game_images">;
+      type GameRuleInsert = TablesInsert<"game_rules">;
+
+      // Update types
+      type GameUpdate = TablesUpdate<"games">;
+      type GameImageUpdate = TablesUpdate<"game_images">;
+      type GameRuleUpdate = TablesUpdate<"game_rules">;
+      ```
+
+examples:
+  - input: |
+      // Working with game types
+      const game: Game = {
+        // ...
+      };
+    output: |
+      // Working with game types
+      import { Tables } from "src/types/database.types";
+      
+      type Game = Tables<"games">;
+      
+      const game: Game = {
+        id: "123",
+        name: "Chess",
+        author_id: "user-123",
+        description: "Classic strategy game",
+        status: "published",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        // Other fields can be null
+        estimated_time: null,
+        weight: null,
+        cover_image_id: null
+      };
+
+metadata:
+  priority: high
+  version: 1.0
+  tags:
+    - database
+    - supabase
+    - types
+    - games
+</rule> 

@@ -1,0 +1,183 @@
+---
+description: Documentation and usage guidelines for the game hooks
+globs: src/hooks/games/**/*.ts, **/*.tsx
+---
+# Game Hooks
+
+Documentation and usage guidelines for the game-related hooks.
+
+<rule>
+name: game_hooks
+description: Guidelines for using the game hooks to interact with the games table in Supabase
+
+filters:
+  - type: file_path
+    pattern: "src/hooks/games/.*\\.ts$"
+  - type: file_path
+    pattern: "src/hooks/useGames.ts"
+  - type: file_path
+    pattern: ".*\\.tsx$"
+  - type: content
+    pattern: "useGames|useGamesQueries|useGamesMutations|useGamesSubscriptions"
+
+actions:
+  - type: suggest
+    message: |
+      ## Game Hooks Usage
+
+      The game hooks provide a comprehensive set of queries, mutations, and subscriptions for interacting with the games table in Supabase. They use Supabase Cache Helpers for automatic cache management.
+
+      ### Recommended Usage (New API)
+
+      ```tsx
+      import { useGamesQueries, useGamesMutations, useGamesSubscriptions } from '@/hooks/games';
+
+      function Component() {
+        // For queries
+        const { getGames, getGame, getGameImages, getGameRules } = useGamesQueries();
+        
+        // For mutations
+        const { createGame, updateGame, deleteGame, updateGameStatus, setGameCoverImage } = useGamesMutations();
+        
+        // For subscriptions
+        const { subscribeToGames, subscribeToGameImages } = useGamesSubscriptions();
+
+        // Use the hooks as needed
+        const { data: games, isLoading } = getGames({ status: ['published'] });
+        
+        // Mutations are already initialized
+        const handleUpdate = () => {
+          updateGame.mutate({ id: 'game-id', name: 'New Name' });
+        };
+        
+        // Subscriptions need to be called
+        subscribeToGames();
+      }
+      ```
+
+      ### Legacy Usage (Deprecated)
+
+      ```tsx
+      import { useGames } from '@/hooks/useGames';
+
+      function Component() {
+        const {
+          useGamesQuery,
+          useGameQuery,
+          useCreateGameMutation,
+          // other hooks...
+        } = useGames();
+
+        // These hooks need to be called to initialize them
+        const { data: games } = useGamesQuery();
+        const createGameMutation = useCreateGameMutation();
+      }
+      ```
+
+      ### Game Processing Service
+
+      For processing game images through the edge function:
+
+      ```tsx
+      import { uploadGameImages, processGameImages } from '@/services/gameProcessingService';
+
+      async function handleUpload() {
+        // Upload images
+        const uploadedImages = await uploadGameImages(userId, images);
+        
+        // Process images and create game
+        const result = await processGameImages(uploadedImages);
+        
+        // Use the result
+        const { game } = result;
+      }
+      ```
+
+      ### Available Hooks
+
+      #### Queries (useGamesQueries)
+      - `getGames(options?)` - Get all games with optional filtering
+      - `getGame(id, options?)` - Get a single game by ID
+      - `getGameImages(gameId, options?)` - Get all images for a game
+      - `getGameRules(gameId, options?)` - Get all rules for a game
+
+      #### Mutations (useGamesMutations)
+      - `createGame` - Create a new game
+      - `updateGame` - Update a game
+      - `deleteGame` - Delete a game
+      - `updateGameStatus` - Update a game's status
+      - `setGameCoverImage` - Set a game's cover image
+
+      #### Subscriptions (useGamesSubscriptions)
+      - `subscribeToGames(options?)` - Subscribe to changes in the games table
+      - `subscribeToGameImages(gameId, options?)` - Subscribe to changes in a game's images
+
+      ### Benefits of the New Structure
+      
+      - **Reduced bundle size**: Only import the hooks you need
+      - **Improved performance**: No unnecessary re-renders
+      - **Better organization**: Separation of concerns
+      - **Easier testing**: Test individual hooks in isolation
+      - **Automatic cache management**: Supabase Cache Helpers handle cache invalidation
+
+examples:
+  - input: |
+      // Old way: Fetching games
+      const { useGamesQuery } = useGames();
+      const { data: games } = useGamesQuery();
+    output: |
+      // New way: Fetching games with filtering
+      import { useGamesQueries } from '@/hooks/games';
+      
+      const { getGames } = useGamesQueries();
+      const { data: games, isLoading, error } = getGames({
+        status: ['published'],
+        authorId: 'user-id'
+      });
+
+      if (isLoading) return <div>Loading...</div>;
+      if (error) return <div>Error: {error.message}</div>;
+
+  - input: |
+      // Old way: Creating a game
+      const { useCreateGameMutation } = useGames();
+      const createGameMutation = useCreateGameMutation();
+    output: |
+      // New way: Creating a game
+      import { useGamesMutations } from '@/hooks/games';
+      
+      const { createGame } = useGamesMutations();
+      
+      const handleCreateGame = () => {
+        createGame.mutate({
+          name: 'New Game',
+          author_id: 'user-id',
+          status: 'draft',
+          description: 'A new game'
+        });
+      };
+
+  - input: |
+      // Old way: Subscribing to changes
+      const { useGamesSubscription } = useGames();
+      useGamesSubscription();
+    output: |
+      // New way: Subscribing to changes with options
+      import { useGamesSubscriptions } from '@/hooks/games';
+      
+      const { subscribeToGames, subscribeToGameImages } = useGamesSubscriptions();
+      
+      // Subscribe to all games
+      subscribeToGames({ enabled: true });
+      
+      // For a specific game's images
+      subscribeToGameImages(gameId, { enabled: true });
+
+metadata:
+  priority: high
+  version: 2.0
+  tags:
+    - hooks
+    - supabase
+    - games
+</rule> 

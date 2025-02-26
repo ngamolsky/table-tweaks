@@ -1,0 +1,259 @@
+---
+description: Documentation for using Supabase Cache Helpers with React Query
+globs: **/*.{ts,tsx}
+---
+# Supabase Cache Helpers
+
+Documentation for using Supabase Cache Helpers with React Query.
+
+<rule>
+name: supabase_cache_helpers
+description: Guidelines for using Supabase Cache Helpers with React Query in the project
+
+filters:
+  - type: file_path
+    pattern: ".*\\.(ts|tsx)$"
+  - type: content
+    pattern: "@supabase-cache-helpers/postgrest-react-query"
+  - type: content
+    pattern: "useInsertMutation|useUpdateMutation|useDeleteMutation|useQuery"
+
+actions:
+  - type: suggest
+    message: |
+      ## Supabase Cache Helpers
+
+      This project uses Supabase Cache Helpers with React Query for efficient data fetching and cache management.
+
+      ### Query Hooks
+
+      #### useQuery
+      ```typescript
+      // Basic query
+      const { data, isLoading, error } = useQuery(
+        supabase.from("table_name").select("*")
+      );
+
+      // Query with options
+      const { data, isLoading, error } = useQuery(
+        supabase.from("table_name").select("*").eq("column", value),
+        {
+          enabled: condition // Optional condition to enable/disable the query
+        }
+      );
+
+      // Single item query
+      const { data, isLoading, error } = useQuery(
+        supabase.from("table_name").select("*").eq("id", id).single()
+      );
+      ```
+
+      ### Mutation Hooks
+
+      #### useInsertMutation
+      ```typescript
+      const { mutate, mutateAsync } = useInsertMutation(
+        supabase.from("table_name"),
+        ["primary_key"],
+        null // or column selection
+      );
+
+      // Usage
+      mutate({
+        column1: value1,
+        column2: value2
+      });
+      ```
+
+      #### useUpdateMutation
+      ```typescript
+      const { mutate, mutateAsync } = useUpdateMutation(
+        supabase.from("table_name"),
+        ["primary_key"],
+        null // or column selection
+      );
+
+      // Usage
+      mutate({
+        id: "record-id", // Must include primary key
+        column1: newValue1,
+        column2: newValue2
+      });
+      ```
+
+      #### useDeleteMutation
+      ```typescript
+      const { mutate, mutateAsync } = useDeleteMutation(
+        supabase.from("table_name"),
+        ["primary_key"],
+        null // or column selection
+      );
+
+      // Usage
+      mutate({
+        id: "record-id" // Must include primary key
+      });
+      ```
+
+      ### Pagination Queries
+
+      #### useInfiniteOffsetPaginationQuery
+      ```typescript
+      const {
+        currentPage,
+        nextPage,
+        previousPage,
+        setPage,
+        pages,
+        pageIndex,
+        isValidating,
+        error,
+      } = useInfiniteOffsetPaginationQuery(
+        supabase.from("table_name").select("*").order("column", { ascending: true }),
+        { pageSize: 10 }
+      );
+      ```
+
+      ### Subscriptions Pattern
+
+      ```typescript
+      useEffect(() => {
+        const channel = supabase
+          .channel("channel-name")
+          .on(
+            "postgres_changes",
+            {
+              event: "*",
+              schema: "public",
+              table: "table_name",
+              filter: "optional_filter",
+            },
+            (payload) => {
+              // Cache is automatically updated by Supabase Cache Helpers
+              // You can add additional logic here if needed
+            }
+          )
+          .subscribe();
+          
+        return () => {
+          supabase.removeChannel(channel);
+        };
+      }, [dependencies]);
+      ```
+
+      ### Best Practices for Hook Organization
+
+      #### 1. Group hooks by entity and functionality
+      ```typescript
+      // src/hooks/users/useUsersQueries.ts
+      export const useUsersQueries = () => {
+        const getUsers = () => useQuery(...);
+        const getUser = (id) => useQuery(...);
+        
+        return { getUsers, getUser };
+      };
+
+      // src/hooks/users/useUsersMutations.ts
+      export const useUsersMutations = () => {
+        const createUser = useInsertMutation(...);
+        const updateUser = useUpdateMutation(...);
+        
+        return { createUser, updateUser };
+      };
+      ```
+
+      #### 2. Create barrel files for easy imports
+      ```typescript
+      // src/hooks/users/index.ts
+      export * from './useUsersQueries';
+      export * from './useUsersMutations';
+      ```
+
+      #### 3. Use service layers for complex operations
+      ```typescript
+      // src/services/userService.ts
+      export const processUserData = async (data) => {
+        // Complex logic here
+      };
+
+      // In component
+      import { useUsersMutations } from '@/hooks/users';
+      import { processUserData } from '@/services/userService';
+
+      const { createUser } = useUsersMutations();
+      
+      const handleSubmit = async (data) => {
+        const processed = await processUserData(data);
+        createUser.mutate(processed);
+      };
+      ```
+
+examples:
+  - input: |
+      // Basic query
+      const { data } = useQuery(supabase.from("table").select("*"));
+    output: |
+      // Query with proper error handling
+      const { data, isLoading, error } = useQuery(
+        supabase.from("table").select("*")
+      );
+      
+      if (isLoading) return <div>Loading...</div>;
+      if (error) return <div>Error: {error.message}</div>;
+      
+      return (
+        <div>
+          {data?.map(item => (
+            <div key={item.id}>{item.name}</div>
+          ))}
+        </div>
+      );
+
+  - input: |
+      // Basic mutation
+      const mutation = useInsertMutation(supabase.from("table"));
+    output: |
+      // Proper mutation with primary keys
+      const mutation = useInsertMutation(
+        supabase.from("table"),
+        ["id"], // Primary key(s)
+        null    // Column selection (null for all)
+      );
+      
+      // Usage
+      const handleSubmit = () => {
+        mutation.mutate({
+          name: "New Item",
+          description: "Description"
+        });
+      };
+
+  - input: |
+      // Basic update
+      const updateMutation = useUpdateMutation(supabase.from("table"));
+    output: |
+      // Proper update mutation
+      const updateMutation = useUpdateMutation(
+        supabase.from("table"),
+        ["id"], // Primary key(s)
+        null    // Column selection (null for all)
+      );
+      
+      // Usage
+      const handleUpdate = (id) => {
+        updateMutation.mutate({
+          id: id,           // Must include primary key
+          name: "Updated Name",
+          description: "Updated description"
+        });
+      };
+
+metadata:
+  priority: high
+  version: 1.2
+  tags:
+    - supabase
+    - react-query
+    - cache
+    - hooks
+</rule>

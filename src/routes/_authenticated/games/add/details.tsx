@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ImageIcon, Loader2 } from "lucide-react";
+import { ImageIcon } from "lucide-react";
 import { useGameCreate } from "@/contexts/GameCreateContext";
 
 export const Route = createFileRoute("/_authenticated/games/add/details")({

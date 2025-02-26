@@ -10,9 +10,16 @@ import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import { GameCreateProvider, useGameCreate } from "@/contexts/GameCreateContext";
+import {
+  GameCreateProvider,
+  useGameCreate,
+} from "@/contexts/GameCreateContext";
 import { useLoggedInUser } from "@/hooks/useLoggedInUser";
-import { supabase } from "@/lib/supabase";
+import { useGamesMutations } from "@/hooks/games";
+import {
+  processGameImages,
+  uploadGameImages,
+} from "@/services/gameProcessingService";
 
 function AddGame() {
   const navigate = useNavigate();
@@ -21,6 +28,7 @@ function AddGame() {
   const { toast } = useToast();
   const { user } = useLoggedInUser();
   const { gameData, updateGameData } = useGameCreate();
+  const { updateGame, setGameCoverImage } = useGamesMutations();
 
   // Determine current step from path
   const currentStep = location.pathname.split("/").pop();
@@ -29,41 +37,12 @@ function AddGame() {
     if (currentStep === "upload") {
       setIsCreating(true);
       try {
-        // Upload images to storage and create initial game
-        const uploadedImages = await Promise.all(
-          gameData.images.map(async (image) => {
-            const path = `${user.id}/rules/${crypto.randomUUID()}-${image.file.name}`;
-            const { error } = await supabase.storage
-              .from("game-images")
-              .upload(path, image.file);
+        // Upload images to storage using our service
+        const uploadedImages = await uploadGameImages(user.id, gameData.images);
 
-            if (error) throw error;
-
-            return {
-              path,
-              isCover: image.isCover,
-            };
-          })
-        );
-
-        // Create initial game and start processing
-        const { data, error } = await supabase.functions.invoke<{
-          game: {
-            id: string;
-            name: string;
-            description: string;
-            estimatedTime: string;
-          };
-          message: string;
-        }>("create-game", {
-          body: {
-            images: uploadedImages,
-          },
-        });
-
-        if (error || !data) throw new Error("Failed to create game");
-
-        const { game } = data;
+        // Process images and create initial game using our service
+        const result = await processGameImages(uploadedImages);
+        const { game } = result;
 
         // Update context with game ID and initial data
         const newGameData = {
@@ -115,18 +94,23 @@ function AddGame() {
 
     setIsCreating(true);
     try {
-      // Update game with final details
-      const { error } = await supabase
-        .from("games")
-        .update({
-          name: gameData.name,
-          description: gameData.description,
-          estimated_time: gameData.estimatedTime,
-          status: "published",
-        })
-        .eq("id", gameData.id);
+      // Update game with final details using our mutation hook
+      await updateGame.mutateAsync({
+        id: gameData.id,
+        name: gameData.name,
+        description: gameData.description,
+        estimated_time: gameData.estimatedTime,
+        status: "published",
+      });
 
-      if (error) throw error;
+      // If there's a cover image, set it using our mutation hook
+      const coverImage = gameData.images.find((img) => img.isCover);
+      if (coverImage) {
+        await setGameCoverImage.mutateAsync({
+          gameId: gameData.id,
+          imageId: coverImage.id,
+        });
+      }
 
       toast({
         title: "Game Published",
