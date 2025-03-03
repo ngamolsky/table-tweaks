@@ -31,11 +31,12 @@ const EXTRACT_GAME_DATA_PROMPT = `
 async function downloadAndConvertToBase64(
     supabaseClient: SupabaseClient<Database>,
     imagePath: string,
+    requestId: string,
 ): Promise<string> {
-    console.log(`[ Downloading image ${imagePath}`);
+    console.log(`[${requestId}]  Downloading image ${imagePath}`);
     const { data, error } = await supabaseClient
         .storage
-        .from("game-images")
+        .from("game_images")
         .download(imagePath);
 
     if (error) throw error;
@@ -116,7 +117,7 @@ Deno.serve(async (req) => {
 
         const base64Images = await Promise.all(
             images.map((img) =>
-                downloadAndConvertToBase64(supabaseClient, img.path)
+                downloadAndConvertToBase64(supabaseClient, img.path, requestId)
             ),
         );
 
@@ -214,7 +215,7 @@ async function processGameRulesInBackground(
         console.time(`[${processId}] Download Images`);
         const base64Images = await Promise.all(
             imagePaths.map((path) =>
-                downloadAndConvertToBase64(supabaseClient, path)
+                downloadAndConvertToBase64(supabaseClient, path, processId)
             ),
         );
         console.timeEnd(`[${processId}] Download Images`);

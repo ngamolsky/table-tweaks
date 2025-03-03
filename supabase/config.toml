@@ -81,7 +81,15 @@ file_size_limit = "50MiB"
 [storage.image_transformation]
 enabled = true
 
-# Uncomment to configure local storage buckets
+# Configure storage buckets
+[storage.buckets.game_images]
+public = false
+file_size_limit = "50MiB"
+allowed_mime_types = ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp"]
+# Uncomment if you want to specify a custom path for storing objects
+# objects_path = "./game_images"
+
+# Uncomment to configure additional local storage buckets
 # [storage.buckets.images]
 # public = false
 # file_size_limit = "50MiB"

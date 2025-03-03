@@ -1,0 +1,78 @@
+---
+description: Import Conventions
+globs: *
+---
+ # Import Path Conventions
+
+Guidelines for using the correct import path syntax in the project.
+
+<rule>
+name: import_paths
+description: Standards for importing files from the src directory using the @/ syntax
+
+filters:
+  - type: file_extension
+    pattern: "\\.(ts|tsx|js|jsx)$"
+  - type: content
+    pattern: "import .* from ['\"](mdc:?!@)src/"
+  - type: event
+    pattern: "file_edit"
+
+actions:
+  - type: reject
+    conditions:
+      - pattern: "import .* from ['\"]src/"
+        message: "Imports from the src directory must use the @/ syntax instead of src/"
+
+  - type: suggest
+    message: |
+      ## Import Path Conventions
+
+      When importing files from the src directory:
+
+      ### ✅ DO:
+      - Use the `@/` alias for imports from the src directory
+      - Example: `import { Component } from '@/components/Component'`
+
+      ### ❌ DON'T:
+      - Use relative paths like `import { Component } from 'src/components/Component'`
+      - Use deeply nested relative paths like `import { Component } from '../../components/Component'`
+
+      ### Benefits:
+      - Consistent import style across the codebase
+      - Easier refactoring when files are moved
+      - Improved readability
+      - Shorter import statements
+
+      ### Configuration:
+      This alias is configured in:
+      - `tsconfig.json` with `"paths": { "@/*": ["./src/*"] }`
+      - `vite.config.ts` with `resolve: { alias: { '@': '/src' } }`
+
+examples:
+  - input: |
+      // Incorrect: Using src/ directly
+      import { Button } from 'src/components/ui/Button';
+      import { useGamesQueries } from 'src/hooks/games/useGamesQueries';
+    output: |
+      // Correct: Using @/ alias
+      import { Button } from '@/components/ui/Button';
+      import { useGamesQueries } from '@/hooks/games/useGamesQueries';
+
+  - input: |
+      // Incorrect: Using relative paths
+      import { supabase } from '../../../lib/supabase';
+      import { Game } from '../types';
+    output: |
+      // Correct: Using @/ alias
+      import { supabase } from '@/lib/supabase';
+      import { Game } from '@/hooks/games/types';
+
+metadata:
+  priority: high
+  version: 1.0
+  tags:
+    - imports
+    - conventions
+    - paths
+</rule>

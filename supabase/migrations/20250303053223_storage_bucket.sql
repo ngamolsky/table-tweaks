@@ -1,11 +1,3 @@
-drop policy "Allow authenticated access to game images" on "storage"."objects";
-
-drop policy "Allow authenticated uploads to game images" on "storage"."objects";
-
-drop policy "Users can upload to their own folders" on "storage"."objects";
-
-drop policy "Users can view their own uploads" on "storage"."objects";
-
 create policy "Enable delete access for authenticated users"
 on "storage"."objects"
 as permissive

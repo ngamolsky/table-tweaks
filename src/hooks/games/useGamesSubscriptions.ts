@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "src/lib/supabase";
+import { supabase } from "@/lib/supabase";
 import { useEffect } from "react";
 import { REALTIME_POSTGRES_CHANGES_LISTEN_EVENT } from "@supabase/supabase-js";
 import { Game } from "./types";

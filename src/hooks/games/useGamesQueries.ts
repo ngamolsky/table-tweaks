@@ -1,5 +1,5 @@
 import { useQuery } from "@supabase-cache-helpers/postgrest-react-query";
-import { supabase } from "src/lib/supabase";
+import { supabase } from "@/lib/supabase";
 import { Game } from "./types";
 
 /**

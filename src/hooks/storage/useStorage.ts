@@ -4,8 +4,7 @@ import {
     useRemoveFiles,
     useUpload,
 } from "@supabase-cache-helpers/storage-react-query";
-import { supabase } from "src/lib/supabase";
-import { FileObject } from "@supabase/storage-js";
+import { supabase } from "@/lib/supabase";
 
 // Define the privacy enum if not exported by the package
 enum StoragePrivacy {

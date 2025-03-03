@@ -4,7 +4,7 @@ import {
     useInsertMutation,
     useUpdateMutation,
 } from "@supabase-cache-helpers/postgrest-react-query";
-import { supabase } from "src/lib/supabase";
+import { supabase } from "@/lib/supabase";
 import { Game } from "./types";
 
 /**
@@ -17,6 +17,13 @@ export const useGamesMutations = () => {
      * Create a new game
      */
     const createGame = useInsertMutation(supabase.from("games"), ["id"], null);
+
+    /**
+     * Create a new game image
+     */
+    const createGameImage = useInsertMutation(supabase.from("game_images"), [
+        "id",
+    ], null);
 
     /**
      * Update a game
@@ -88,6 +95,7 @@ export const useGamesMutations = () => {
 
     return {
         createGame,
+        createGameImage,
         updateGame,
         deleteGame,
         updateGameStatus,

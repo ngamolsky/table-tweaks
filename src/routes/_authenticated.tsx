@@ -3,7 +3,6 @@ import { Loader2 } from "lucide-react";
 import { MobileNavigation } from "@/components/layout/MobileNavigation";
 import { Toaster } from "@/components/ui/toaster";
 import { Header } from "@/components/layout/Header";
-import { PageTransition } from "@/components/layout/PageTransition";
 import { AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabase";
 

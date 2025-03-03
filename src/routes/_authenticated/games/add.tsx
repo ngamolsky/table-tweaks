@@ -15,11 +15,8 @@ import {
   useGameCreate,
 } from "@/contexts/GameCreateContext";
 import { useLoggedInUser } from "@/hooks/useLoggedInUser";
-import { useGamesMutations } from "@/hooks/games";
-import {
-  processGameImages,
-  uploadGameImages,
-} from "@/services/gameProcessingService";
+import { useGamesMutations, useGameImages } from "@/hooks/games";
+import { processGameImages } from "@/services/gameProcessingService";
 
 function AddGame() {
   const navigate = useNavigate();
@@ -28,7 +25,8 @@ function AddGame() {
   const { toast } = useToast();
   const { user } = useLoggedInUser();
   const { gameData, updateGameData } = useGameCreate();
-  const { updateGame, setGameCoverImage } = useGamesMutations();
+  const { updateGame } = useGamesMutations();
+  const { uploadGameImages, isUploading } = useGameImages();
 
   // Determine current step from path
   const currentStep = location.pathname.split("/").pop();
@@ -37,10 +35,17 @@ function AddGame() {
     if (currentStep === "upload") {
       setIsCreating(true);
       try {
-        // Upload images to storage using our service
-        const uploadedImages = await uploadGameImages(user.id, gameData.images);
+        // Upload images to storage using our hook
+        const uploadedImages = await uploadGameImages.mutateAsync({
+          userId: user.id,
+          images: gameData.images,
+        });
 
         // Process images and create initial game using our service
+        // This edge function already:
+        // 1. Creates the game record
+        // 2. Creates the game image records
+        // 3. Sets the cover image on the game
         const result = await processGameImages(uploadedImages);
         const { game } = result;
 
@@ -51,6 +56,8 @@ function AddGame() {
           description: game.description || "",
           estimatedTime: game.estimatedTime || "",
           processingStatus: "processing" as const,
+          // Keep the same images for UI purposes
+          images: gameData.images,
         };
 
         updateGameData(newGameData);
@@ -102,15 +109,6 @@ function AddGame() {
         estimated_time: gameData.estimatedTime,
         status: "published",
       });
-
-      // If there's a cover image, set it using our mutation hook
-      const coverImage = gameData.images.find((img) => img.isCover);
-      if (coverImage) {
-        await setGameCoverImage.mutateAsync({
-          gameId: gameData.id,
-          imageId: coverImage.id,
-        });
-      }
 
       toast({
         title: "Game Published",
@@ -173,13 +171,17 @@ function AddGame() {
             <Button
               type="button"
               onClick={handleNext}
-              disabled={!canProceed() || isCreating}
+              disabled={!canProceed() || isCreating || isUploading}
               className={cn("gap-2 flex-1")}
             >
-              {isCreating ? (
+              {isCreating || isUploading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  {currentStep === "details" ? "Creating..." : "Processing..."}
+                  {currentStep === "details"
+                    ? "Creating..."
+                    : isUploading
+                      ? "Uploading..."
+                      : "Processing..."}
                 </>
               ) : (
                 <>
