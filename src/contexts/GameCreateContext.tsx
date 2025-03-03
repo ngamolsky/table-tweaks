@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 
 export interface GameImage {
@@ -45,14 +45,6 @@ export function GameCreateProvider({
 }) {
   const [gameData, setGameData] = useState<GameData>(initialGameData);
   const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    console.log("GameCreateProvider mounted");
-
-    return () => {
-      console.log("GameCreateProvider unmounted");
-    };
-  }, []);
 
   const processImageMutation = useMutation({
     mutationFn: async (files: File[]) => {
