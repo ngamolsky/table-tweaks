@@ -1,3 +1,11 @@
+-- Create the game_images storage bucket if it doesn't exist
+INSERT INTO storage.buckets (id, name, public, avif_autodetection, file_size_limit, allowed_mime_types, owner)
+VALUES 
+  ('game_images', 'game_images', false, false, 50000000, -- 50MB limit
+   ARRAY['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp']::text[],
+   NULL)
+ON CONFLICT (id) DO NOTHING;
+
 create policy "Enable delete access for authenticated users"
 on "storage"."objects"
 as permissive
