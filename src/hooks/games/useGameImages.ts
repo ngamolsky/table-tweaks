@@ -6,35 +6,35 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
  * Hook for game image operations
  */
 export const useGameImages = () => {
-    const { getFileUrl, uploadFiles } = useStorage();
-    const { getGameImages } = useGamesQueries();
+    const { useFileUrl, useUploadFiles } = useStorage();
+    const { useGameImages } = useGamesQueries();
     const queryClient = useQueryClient();
 
     /**
      * Get the URL for a game image
      */
-    const getGameImageUrl = (
+    const useGameImageUrl = (
         path: string,
         options?: { enabled?: boolean; expiresIn?: number },
     ) => {
-        return getFileUrl("game-images", path, options);
+        return useFileUrl("game-images", path, options);
     };
 
     /**
      * Get all images for a game with their URLs
      */
-    const getGameImagesWithUrls = (
+    const useGameImagesWithUrls = (
         gameId: string,
         options?: { enabled?: boolean },
     ) => {
         // Get the game images from the database
-        const imagesQuery = getGameImages(gameId, options);
+        const imagesQuery = useGameImages(gameId, options);
 
         // If we have images, get their URLs
         const images = imagesQuery.data?.map((image) => {
             // The image_url field contains the path in storage
             // Get the URL for each image
-            const urlQuery = getGameImageUrl(image.image_url, {
+            const urlQuery = useGameImageUrl(image.image_url, {
                 enabled: imagesQuery.isSuccess && !!image.image_url,
                 expiresIn: 60 * 60 * 24, // 24 hours
             });
@@ -56,18 +56,20 @@ export const useGameImages = () => {
     /**
      * Upload game images to storage
      */
-    const uploadGameImagesMutation = uploadFiles("game_images");
+    const uploadGameImagesMutation = useUploadFiles("game_images");
 
     /**
      * Upload game images with metadata
      */
-    const uploadGameImages = useMutation({
+    const useUploadGameImages = useMutation({
         mutationFn: async ({
             userId,
             images,
         }: {
             userId: string;
-            images: Array<{ file: File; isCover: boolean }>;
+            images: Array<
+                { file: File; isCover: boolean; order_index?: number }
+            >;
         }) => {
             // Generate timestamp for unique filenames
             const timestamp = new Date().getTime();
@@ -109,6 +111,7 @@ export const useGameImages = () => {
                 return {
                     path: result.data.path,
                     isCover: images[index].isCover,
+                    order_index: images[index].order_index || index,
                 };
             });
         },
@@ -121,9 +124,9 @@ export const useGameImages = () => {
     });
 
     return {
-        getGameImageUrl,
-        getGameImagesWithUrls,
-        uploadGameImages,
-        isUploading: uploadGameImages.isPending,
+        useGameImageUrl,
+        useGameImagesWithUrls,
+        useUploadGameImages,
+        isUploading: useUploadGameImages.isPending,
     };
 };

@@ -1,0 +1,10 @@
+---
+description: Mobile First Design
+globs: *
+alwaysApply: true
+---
+
+# Mobile FIrst Design
+
+- This app is shipped an iOS app so all UI must be otmizied to work as a mobile app and be intuitive to users
+- try to use iOS best practices

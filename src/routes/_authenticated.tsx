@@ -1,18 +1,13 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { MobileNavigation } from "@/components/layout/MobileNavigation";
-import { Toaster } from "@/components/ui/toaster";
-import { Header } from "@/components/layout/Header";
 import { AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabase";
+import { Toaster } from "sonner";
 
 const Layout = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <div className="relative z-20 bg-background">
-        <Header />
-      </div>
-
       <main className="flex-1 relative z-0">
         <div className="absolute inset-0 overflow-hidden">
           <div className="container mx-auto px-4 py-4 h-full overflow-y-auto pb-[83px] md:pb-4">

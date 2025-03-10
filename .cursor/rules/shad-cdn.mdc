@@ -1,0 +1,10 @@
+---
+description: ShadCDN Components
+globs: *.tsx
+alwaysApply: true
+---
+
+# ShadCDN UI
+
+- Use ShadCDN components wherever possible
+- The command is `pnpm dlx shadcn@latest add button` for example

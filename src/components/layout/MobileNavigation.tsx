@@ -1,6 +1,7 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { navigation } from "@/lib/navigation";
+
 export function MobileNavigation() {
   const location = useLocation();
 

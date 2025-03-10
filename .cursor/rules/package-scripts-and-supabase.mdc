@@ -1,6 +1,7 @@
 ---
 description: Package Scripts and Supabase Commands
 globs: *
+alwaysApply: true
 ---
  # Package Scripts and Supabase Commands
 
@@ -28,6 +29,10 @@ These are the available scripts in the project's package.json file:
 
 ## Supabase CLI Commands
 
+### Tips
+- Always create new migrations for db changes using `supabase migration new <name>` and copy SQL into it
+- You can add a specific migration by just doing `supabase migration up`
+
 ### General Commands
 - `supabase init`: Initialize a new Supabase project
 - `supabase start`: Start the local Supabase development environment
@@ -42,6 +47,9 @@ These are the available scripts in the project's package.json file:
 - `supabase db lint`: Check your database schema for errors
 - `supabase migration new <name>`: Create a new migration file
 - `supabase migration list`: List all migrations
+- `supabase migration up`: Apply pending migrations to the local database
+- `supabase migration down`: Revert the most recent migration from the local database
+
 
 ### Types Generation
 - `supabase gen types typescript --local > ./src/types/database.types.ts`: Generate TypeScript types from the local database schema

@@ -16,29 +16,41 @@ export const useGamesMutations = () => {
     /**
      * Create a new game
      */
-    const createGame = useInsertMutation(supabase.from("games"), ["id"], null);
+    const useCreateGame = useInsertMutation(
+        supabase.from("games"),
+        ["id"],
+        null,
+    );
 
     /**
      * Create a new game image
      */
-    const createGameImage = useInsertMutation(supabase.from("game_images"), [
+    const useCreateGameImage = useInsertMutation(supabase.from("game_images"), [
         "id",
     ], null);
 
     /**
      * Update a game
      */
-    const updateGame = useUpdateMutation(supabase.from("games"), ["id"], null);
+    const useUpdateGame = useUpdateMutation(
+        supabase.from("games"),
+        ["id"],
+        null,
+    );
 
     /**
      * Delete a game
      */
-    const deleteGame = useDeleteMutation(supabase.from("games"), ["id"], null);
+    const useDeleteGame = useDeleteMutation(
+        supabase.from("games"),
+        ["id"],
+        null,
+    );
 
     /**
      * Update a game's status
      */
-    const updateGameStatus = useMutation({
+    const useUpdateGameStatus = useMutation({
         mutationFn: async ({
             id,
             status,
@@ -67,7 +79,7 @@ export const useGamesMutations = () => {
     /**
      * Set a game's cover image
      */
-    const setGameCoverImage = useMutation({
+    const useSetGameCoverImage = useMutation({
         mutationFn: async ({
             gameId,
             imageId,
@@ -93,12 +105,32 @@ export const useGamesMutations = () => {
         },
     });
 
+    /**
+     * Retry processing rules for a game
+     */
+    const useRetryProcessRules = useMutation({
+        mutationFn: async (
+            { gameId, images }: { gameId: string; images: { path: string }[] },
+        ) => {
+            const { data, error } = await supabase.functions.invoke(
+                "process-game-rules",
+                {
+                    body: { gameId, images },
+                },
+            );
+
+            if (error) throw error;
+            return data;
+        },
+    });
+
     return {
-        createGame,
-        createGameImage,
-        updateGame,
-        deleteGame,
-        updateGameStatus,
-        setGameCoverImage,
+        useCreateGame,
+        useCreateGameImage,
+        useUpdateGame,
+        useDeleteGame,
+        useUpdateGameStatus,
+        useSetGameCoverImage,
+        useRetryProcessRules,
     };
 };

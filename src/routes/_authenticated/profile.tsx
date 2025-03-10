@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
+
 const Profile = () => {
-  const { toast } = useToast();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -14,11 +14,7 @@ const Profile = () => {
       navigate({ to: "/login" });
     } catch (error) {
       console.error("Error signing out:", error);
-      toast({
-        variant: "destructive",
-        title: "Error signing out",
-        description: "Please try again later.",
-      });
+      toast.error("Please try again later.");
     }
   };
 

@@ -9,10 +9,11 @@ export const useGamesQueries = () => {
     /**
      * Get all games with optional filtering
      */
-    const getGames = (options?: {
+    const useGames = (options?: {
         status?: Game["status"][];
         authorId?: string;
         enabled?: boolean;
+        name?: string;
     }) => {
         let query = supabase.from("games").select(`
       *,
@@ -28,6 +29,10 @@ export const useGamesQueries = () => {
             query = query.eq("author_id", options.authorId);
         }
 
+        if (options?.name) {
+            query = query.ilike("name", `%${options.name}%`);
+        }
+
         return useQuery(query, {
             enabled: options?.enabled !== false,
         });
@@ -36,19 +41,25 @@ export const useGamesQueries = () => {
     /**
      * Get a single game by ID
      */
-    const getGame = (id: string, options?: { enabled?: boolean }) => {
+    const useGame = (id: string, options?: { enabled?: boolean }) => {
         return useQuery(
             supabase
                 .from("games")
                 .select(`
           *,
           cover_image_id,
-          cover_image:game_images!games_cover_image_id_fkey(*)
+          cover_image:game_images!games_cover_image_id_fkey(*),
+          game_rule:game_rules!game_rules_game_id_fkey(*),
+          tags:game_tag_relations!game_id(
+            id:tag_id,
+            name:game_tags!tag_id(name),
+            type:game_tags!tag_id(type)
+          )
         `)
                 .eq("id", id)
                 .single(),
             {
-                enabled: options?.enabled !== false,
+                enabled: !!id && options?.enabled !== false,
             },
         );
     };
@@ -56,11 +67,11 @@ export const useGamesQueries = () => {
     /**
      * Get game images for a specific game
      */
-    const getGameImages = (gameId: string, options?: { enabled?: boolean }) => {
+    const useGameImages = (gameId: string, options?: { enabled?: boolean }) => {
         return useQuery(
             supabase.from("game_images").select("*").eq("game_id", gameId),
             {
-                enabled: options?.enabled !== false,
+                enabled: !!gameId && options?.enabled !== false,
             },
         );
     };
@@ -68,19 +79,29 @@ export const useGamesQueries = () => {
     /**
      * Get game rules for a specific game
      */
-    const getGameRules = (gameId: string, options?: { enabled?: boolean }) => {
+    const useGameRules = (
+        gameId: string,
+        options?: {
+            enabled?: boolean;
+        },
+    ) => {
+        const query = supabase.from("game_rules").select("*").eq(
+            "game_id",
+            gameId,
+        ).maybeSingle();
+
         return useQuery(
-            supabase.from("game_rules").select("*").eq("game_id", gameId),
+            query,
             {
-                enabled: options?.enabled !== false,
+                enabled: !!gameId && options?.enabled !== false,
             },
         );
     };
 
     return {
-        getGames,
-        getGame,
-        getGameImages,
-        getGameRules,
+        useGames,
+        useGame,
+        useGameImages,
+        useGameRules,
     };
 };

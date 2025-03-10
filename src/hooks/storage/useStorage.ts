@@ -19,7 +19,7 @@ export const useStorage = () => {
     /**
      * Get a download URL for a file in storage
      */
-    const getFileUrl = (
+    const useFileUrlHook = (
         bucket: string,
         path: string,
         options?: { enabled?: boolean; expiresIn?: number },
@@ -40,21 +40,21 @@ export const useStorage = () => {
     /**
      * Upload files to storage
      */
-    const uploadFiles = (bucket: string) => {
+    const useUploadFiles = (bucket: string) => {
         return useUpload(supabase.storage.from(bucket));
     };
 
     /**
      * Remove files from storage
      */
-    const removeFiles = (bucket: string) => {
+    const useRemoveFilesHook = (bucket: string) => {
         return useRemoveFiles(supabase.storage.from(bucket));
     };
 
     /**
      * List contents of a bucket or folder
      */
-    const listFiles = (
+    const useListFiles = (
         bucket: string,
         path: string = "",
         options?: { enabled?: boolean },
@@ -70,9 +70,9 @@ export const useStorage = () => {
     };
 
     return {
-        getFileUrl,
-        uploadFiles,
-        removeFiles,
-        listFiles,
+        useFileUrl: useFileUrlHook,
+        useUploadFiles,
+        useRemoveFiles: useRemoveFilesHook,
+        useListFiles,
     };
 };

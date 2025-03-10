@@ -15,10 +15,7 @@ import { Route as LoginImport } from './routes/login'
 import { Route as AuthenticatedImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedProfileImport } from './routes/_authenticated/profile'
-import { Route as AuthenticatedGamesAddImport } from './routes/_authenticated/games/add'
 import { Route as AuthenticatedGamesIdImport } from './routes/_authenticated/games.$id'
-import { Route as AuthenticatedGamesAddUploadImport } from './routes/_authenticated/games/add/upload'
-import { Route as AuthenticatedGamesAddDetailsImport } from './routes/_authenticated/games/add/details'
 
 // Create/Update Routes
 
@@ -45,31 +42,11 @@ const AuthenticatedProfileRoute = AuthenticatedProfileImport.update({
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 
-const AuthenticatedGamesAddRoute = AuthenticatedGamesAddImport.update({
-  id: '/games/add',
-  path: '/games/add',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-
 const AuthenticatedGamesIdRoute = AuthenticatedGamesIdImport.update({
   id: '/games/$id',
   path: '/games/$id',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-
-const AuthenticatedGamesAddUploadRoute =
-  AuthenticatedGamesAddUploadImport.update({
-    id: '/upload',
-    path: '/upload',
-    getParentRoute: () => AuthenticatedGamesAddRoute,
-  } as any)
-
-const AuthenticatedGamesAddDetailsRoute =
-  AuthenticatedGamesAddDetailsImport.update({
-    id: '/details',
-    path: '/details',
-    getParentRoute: () => AuthenticatedGamesAddRoute,
-  } as any)
 
 // Populate the FileRoutesByPath interface
 
@@ -110,59 +87,21 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGamesIdImport
       parentRoute: typeof AuthenticatedImport
     }
-    '/_authenticated/games/add': {
-      id: '/_authenticated/games/add'
-      path: '/games/add'
-      fullPath: '/games/add'
-      preLoaderRoute: typeof AuthenticatedGamesAddImport
-      parentRoute: typeof AuthenticatedImport
-    }
-    '/_authenticated/games/add/details': {
-      id: '/_authenticated/games/add/details'
-      path: '/details'
-      fullPath: '/games/add/details'
-      preLoaderRoute: typeof AuthenticatedGamesAddDetailsImport
-      parentRoute: typeof AuthenticatedGamesAddImport
-    }
-    '/_authenticated/games/add/upload': {
-      id: '/_authenticated/games/add/upload'
-      path: '/upload'
-      fullPath: '/games/add/upload'
-      preLoaderRoute: typeof AuthenticatedGamesAddUploadImport
-      parentRoute: typeof AuthenticatedGamesAddImport
-    }
   }
 }
 
 // Create and export the route tree
 
-interface AuthenticatedGamesAddRouteChildren {
-  AuthenticatedGamesAddDetailsRoute: typeof AuthenticatedGamesAddDetailsRoute
-  AuthenticatedGamesAddUploadRoute: typeof AuthenticatedGamesAddUploadRoute
-}
-
-const AuthenticatedGamesAddRouteChildren: AuthenticatedGamesAddRouteChildren = {
-  AuthenticatedGamesAddDetailsRoute: AuthenticatedGamesAddDetailsRoute,
-  AuthenticatedGamesAddUploadRoute: AuthenticatedGamesAddUploadRoute,
-}
-
-const AuthenticatedGamesAddRouteWithChildren =
-  AuthenticatedGamesAddRoute._addFileChildren(
-    AuthenticatedGamesAddRouteChildren,
-  )
-
 interface AuthenticatedRouteChildren {
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedGamesIdRoute: typeof AuthenticatedGamesIdRoute
-  AuthenticatedGamesAddRoute: typeof AuthenticatedGamesAddRouteWithChildren
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedGamesIdRoute: AuthenticatedGamesIdRoute,
-  AuthenticatedGamesAddRoute: AuthenticatedGamesAddRouteWithChildren,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -175,9 +114,6 @@ export interface FileRoutesByFullPath {
   '/profile': typeof AuthenticatedProfileRoute
   '/': typeof AuthenticatedIndexRoute
   '/games/$id': typeof AuthenticatedGamesIdRoute
-  '/games/add': typeof AuthenticatedGamesAddRouteWithChildren
-  '/games/add/details': typeof AuthenticatedGamesAddDetailsRoute
-  '/games/add/upload': typeof AuthenticatedGamesAddUploadRoute
 }
 
 export interface FileRoutesByTo {
@@ -185,9 +121,6 @@ export interface FileRoutesByTo {
   '/profile': typeof AuthenticatedProfileRoute
   '/': typeof AuthenticatedIndexRoute
   '/games/$id': typeof AuthenticatedGamesIdRoute
-  '/games/add': typeof AuthenticatedGamesAddRouteWithChildren
-  '/games/add/details': typeof AuthenticatedGamesAddDetailsRoute
-  '/games/add/upload': typeof AuthenticatedGamesAddUploadRoute
 }
 
 export interface FileRoutesById {
@@ -197,31 +130,13 @@ export interface FileRoutesById {
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/games/$id': typeof AuthenticatedGamesIdRoute
-  '/_authenticated/games/add': typeof AuthenticatedGamesAddRouteWithChildren
-  '/_authenticated/games/add/details': typeof AuthenticatedGamesAddDetailsRoute
-  '/_authenticated/games/add/upload': typeof AuthenticatedGamesAddUploadRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | ''
-    | '/login'
-    | '/profile'
-    | '/'
-    | '/games/$id'
-    | '/games/add'
-    | '/games/add/details'
-    | '/games/add/upload'
+  fullPaths: '' | '/login' | '/profile' | '/' | '/games/$id'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/login'
-    | '/profile'
-    | '/'
-    | '/games/$id'
-    | '/games/add'
-    | '/games/add/details'
-    | '/games/add/upload'
+  to: '/login' | '/profile' | '/' | '/games/$id'
   id:
     | '__root__'
     | '/_authenticated'
@@ -229,9 +144,6 @@ export interface FileRouteTypes {
     | '/_authenticated/profile'
     | '/_authenticated/'
     | '/_authenticated/games/$id'
-    | '/_authenticated/games/add'
-    | '/_authenticated/games/add/details'
-    | '/_authenticated/games/add/upload'
   fileRoutesById: FileRoutesById
 }
 
@@ -264,8 +176,7 @@ export const routeTree = rootRoute
       "children": [
         "/_authenticated/profile",
         "/_authenticated/",
-        "/_authenticated/games/$id",
-        "/_authenticated/games/add"
+        "/_authenticated/games/$id"
       ]
     },
     "/login": {
@@ -282,22 +193,6 @@ export const routeTree = rootRoute
     "/_authenticated/games/$id": {
       "filePath": "_authenticated/games.$id.tsx",
       "parent": "/_authenticated"
-    },
-    "/_authenticated/games/add": {
-      "filePath": "_authenticated/games/add.tsx",
-      "parent": "/_authenticated",
-      "children": [
-        "/_authenticated/games/add/details",
-        "/_authenticated/games/add/upload"
-      ]
-    },
-    "/_authenticated/games/add/details": {
-      "filePath": "_authenticated/games/add/details.tsx",
-      "parent": "/_authenticated/games/add"
-    },
-    "/_authenticated/games/add/upload": {
-      "filePath": "_authenticated/games/add/upload.tsx",
-      "parent": "/_authenticated/games/add"
     }
   }
 }

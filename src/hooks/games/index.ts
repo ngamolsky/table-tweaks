@@ -3,3 +3,4 @@ export * from "./useGamesQueries";
 export * from "./useGamesMutations";
 export * from "./useGamesSubscriptions";
 export * from "./useGameImages";
+export * from "./useBggSearch";

@@ -7,12 +7,7 @@ export const navigation = [
         icon: Home,
         path: "/_authenticated/",
     },
-    {
-        name: "Add Game",
-        to: "/games/add",
-        icon: Plus,
-        path: "/_authenticated/games/add",
-    },
+
     {
         name: "Profile",
         to: "/profile",

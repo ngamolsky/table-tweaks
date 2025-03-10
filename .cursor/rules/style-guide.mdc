@@ -1,0 +1,15 @@
+---
+description: Style Guide
+globs: *
+alwaysApply: true
+---
+
+# Style Guide
+- Never leave unused imports
+- Check all litner warnings as well like unused variables and fix those
+- DO NOT deploy edge functions or db changes to prod without me specifically asking for it
+- No need to run edge fdunctinons or dev server locally, I will already have the running
+- Don't create READMEs for specific features
+- Use ShadCDN whenever possible for components 
+
+

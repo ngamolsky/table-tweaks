@@ -1,6 +1,7 @@
 ---
 description: Documentation and usage guidelines for the game hooks
 globs: src/hooks/games/**/*.ts, **/*.tsx
+alwaysApply: false
 ---
 # Game Hooks
 
@@ -34,24 +35,24 @@ actions:
 
       function Component() {
         // For queries
-        const { getGames, getGame, getGameImages, getGameRules } = useGamesQueries();
+        const { useGames, useGame, useGameImages, useGameRules } = useGamesQueries();
         
         // For mutations
-        const { createGame, updateGame, deleteGame, updateGameStatus, setGameCoverImage } = useGamesMutations();
+        const { useCreateGame, useUpdateGame, useDeleteGame, useUpdateGameStatus, useSetGameCoverImage } = useGamesMutations();
         
         // For subscriptions
-        const { subscribeToGames, subscribeToGameImages } = useGamesSubscriptions();
+        const { useSubscribeToGames, useSubscribeToGameImages } = useGamesSubscriptions();
 
         // Use the hooks as needed
-        const { data: games, isLoading } = getGames({ status: ['published'] });
+        const { data: games, isLoading } = useGames({ status: ['published'] });
         
         // Mutations are already initialized
         const handleUpdate = () => {
-          updateGame.mutate({ id: 'game-id', name: 'New Name' });
+          useUpdateGame.mutate({ id: 'game-id', name: 'New Name' });
         };
         
         // Subscriptions need to be called
-        subscribeToGames();
+        useSubscribeToGames();
       }
       ```
 
@@ -96,21 +97,21 @@ actions:
       ### Available Hooks
 
       #### Queries (useGamesQueries)
-      - `getGames(options?)` - Get all games with optional filtering
-      - `getGame(id, options?)` - Get a single game by ID
-      - `getGameImages(gameId, options?)` - Get all images for a game
-      - `getGameRules(gameId, options?)` - Get all rules for a game
+      - `useGames(options?)` - Get all games with optional filtering
+      - `useGame(id, options?)` - Get a single game by ID
+      - `useGameImages(gameId, options?)` - Get all images for a game
+      - `useGameRules(gameId, options?)` - Get all rules for a game
 
       #### Mutations (useGamesMutations)
-      - `createGame` - Create a new game
-      - `updateGame` - Update a game
-      - `deleteGame` - Delete a game
-      - `updateGameStatus` - Update a game's status
-      - `setGameCoverImage` - Set a game's cover image
+      - `useCreateGame` - Create a new game
+      - `useUpdateGame` - Update a game
+      - `useDeleteGame` - Delete a game
+      - `useUpdateGameStatus` - Update a game's status
+      - `useSetGameCoverImage` - Set a game's cover image
 
       #### Subscriptions (useGamesSubscriptions)
-      - `subscribeToGames(options?)` - Subscribe to changes in the games table
-      - `subscribeToGameImages(gameId, options?)` - Subscribe to changes in a game's images
+      - `useSubscribeToGames(options?)` - Subscribe to changes in the games table
+      - `useSubscribeToGameImages(gameId, options?)` - Subscribe to changes in a game's images
 
       ### Benefits of the New Structure
       
@@ -129,8 +130,8 @@ examples:
       // New way: Fetching games with filtering
       import { useGamesQueries } from '@/hooks/games';
       
-      const { getGames } = useGamesQueries();
-      const { data: games, isLoading, error } = getGames({
+      const { useGames } = useGamesQueries();
+      const { data: games, isLoading, error } = useGames({
         status: ['published'],
         authorId: 'user-id'
       });
@@ -146,10 +147,10 @@ examples:
       // New way: Creating a game
       import { useGamesMutations } from '@/hooks/games';
       
-      const { createGame } = useGamesMutations();
+      const { useCreateGame } = useGamesMutations();
       
       const handleCreateGame = () => {
-        createGame.mutate({
+        useCreateGame.mutate({
           name: 'New Game',
           author_id: 'user-id',
           status: 'draft',
@@ -165,13 +166,13 @@ examples:
       // New way: Subscribing to changes with options
       import { useGamesSubscriptions } from '@/hooks/games';
       
-      const { subscribeToGames, subscribeToGameImages } = useGamesSubscriptions();
+      const { useSubscribeToGames, useSubscribeToGameImages } = useGamesSubscriptions();
       
       // Subscribe to all games
-      subscribeToGames({ enabled: true });
+      useSubscribeToGames({ enabled: true });
       
       // For a specific game's images
-      subscribeToGameImages(gameId, { enabled: true });
+      useSubscribeToGameImages(gameId, { enabled: true });
 
 metadata:
   priority: high

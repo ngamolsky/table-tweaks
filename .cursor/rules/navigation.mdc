@@ -1,0 +1,9 @@
+---
+description: Navigation Using Tanstack ROuter
+globs: *.tsx
+alwaysApply: true
+---
+
+# Navigation
+- Always navigate using Tanstack router
+- DO NOT import from react-router-dom

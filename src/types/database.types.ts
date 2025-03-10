@@ -41,6 +41,7 @@ export type Database = {
           image_type: Database["public"]["Enums"]["image_type"];
           image_url: string;
           is_cover: boolean | null;
+          is_external: boolean | null;
           uploaded_at: string;
           uploader_id: string;
         };
@@ -50,6 +51,7 @@ export type Database = {
           image_type: Database["public"]["Enums"]["image_type"];
           image_url: string;
           is_cover?: boolean | null;
+          is_external?: boolean | null;
           uploaded_at?: string;
           uploader_id: string;
         };
@@ -59,6 +61,7 @@ export type Database = {
           image_type?: Database["public"]["Enums"]["image_type"];
           image_url?: string;
           is_cover?: boolean | null;
+          is_external?: boolean | null;
           uploaded_at?: string;
           uploader_id?: string;
         };
@@ -72,12 +75,52 @@ export type Database = {
           },
         ];
       };
-      game_rules: {
+      game_player_counts: {
         Row: {
           created_at: string | null;
           game_id: string;
           id: string;
+          player_count: number;
+          recommendation: string;
+          votes: number;
+        };
+        Insert: {
+          created_at?: string | null;
+          game_id: string;
+          id?: string;
+          player_count: number;
+          recommendation: string;
+          votes?: number;
+        };
+        Update: {
+          created_at?: string | null;
+          game_id?: string;
+          id?: string;
+          player_count?: number;
+          recommendation?: string;
+          votes?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "game_player_counts_game_id_fkey";
+            columns: ["game_id"];
+            isOneToOne: false;
+            referencedRelation: "games";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      game_rules: {
+        Row: {
+          created_at: string | null;
+          error_message: string | null;
+          game_id: string;
+          id: string;
+          last_attempt_at: string | null;
           processed_at: string | null;
+          processing_attempts: number | null;
+          processing_progress: Json | null;
+          processing_request_id: string | null;
           processing_status:
             | Database["public"]["Enums"]["processing_status"]
             | null;
@@ -87,9 +130,14 @@ export type Database = {
         };
         Insert: {
           created_at?: string | null;
+          error_message?: string | null;
           game_id: string;
           id?: string;
+          last_attempt_at?: string | null;
           processed_at?: string | null;
+          processing_attempts?: number | null;
+          processing_progress?: Json | null;
+          processing_request_id?: string | null;
           processing_status?:
             | Database["public"]["Enums"]["processing_status"]
             | null;
@@ -99,9 +147,14 @@ export type Database = {
         };
         Update: {
           created_at?: string | null;
+          error_message?: string | null;
           game_id?: string;
           id?: string;
+          last_attempt_at?: string | null;
           processed_at?: string | null;
+          processing_attempts?: number | null;
+          processing_progress?: Json | null;
+          processing_request_id?: string | null;
           processing_status?:
             | Database["public"]["Enums"]["processing_status"]
             | null;
@@ -119,75 +172,126 @@ export type Database = {
           },
         ];
       };
-      game_rules_images: {
+      game_tag_relations: {
         Row: {
           created_at: string | null;
-          image_id: string;
-          rule_id: string;
+          game_id: string;
+          tag_id: string;
         };
         Insert: {
           created_at?: string | null;
-          image_id: string;
-          rule_id: string;
+          game_id: string;
+          tag_id: string;
         };
         Update: {
           created_at?: string | null;
-          image_id?: string;
-          rule_id?: string;
+          game_id?: string;
+          tag_id?: string;
         };
         Relationships: [
           {
-            foreignKeyName: "game_rules_images_image_id_fkey";
-            columns: ["image_id"];
+            foreignKeyName: "game_tag_relations_game_id_fkey";
+            columns: ["game_id"];
             isOneToOne: false;
-            referencedRelation: "game_images";
+            referencedRelation: "games";
             referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "game_rules_images_rule_id_fkey";
-            columns: ["rule_id"];
+            foreignKeyName: "game_tag_relations_tag_id_fkey";
+            columns: ["tag_id"];
             isOneToOne: false;
-            referencedRelation: "game_rules";
+            referencedRelation: "game_tags";
             referencedColumns: ["id"];
           },
         ];
       };
+      game_tags: {
+        Row: {
+          created_at: string | null;
+          id: string;
+          name: string;
+          type: string;
+        };
+        Insert: {
+          created_at?: string | null;
+          id?: string;
+          name: string;
+          type: string;
+        };
+        Update: {
+          created_at?: string | null;
+          id?: string;
+          name?: string;
+          type?: string;
+        };
+        Relationships: [];
+      };
       games: {
         Row: {
           author_id: string;
+          bgg_id: string | null;
+          bgg_image_url: string | null;
+          bgg_rating: number | null;
+          bgg_thumbnail_url: string | null;
+          bgg_weight: number | null;
+          bgg_year_published: number | null;
           cover_image_id: string | null;
           created_at: string;
           description: string | null;
           estimated_time: string | null;
+          has_complete_rules: boolean | null;
           id: string;
+          language_dependence: number | null;
+          max_players: number | null;
+          min_age: number | null;
+          min_players: number | null;
           name: string;
           status: Database["public"]["Enums"]["game_status"];
           updated_at: string;
-          weight: number | null;
         };
         Insert: {
           author_id: string;
+          bgg_id?: string | null;
+          bgg_image_url?: string | null;
+          bgg_rating?: number | null;
+          bgg_thumbnail_url?: string | null;
+          bgg_weight?: number | null;
+          bgg_year_published?: number | null;
           cover_image_id?: string | null;
           created_at?: string;
           description?: string | null;
           estimated_time?: string | null;
+          has_complete_rules?: boolean | null;
           id?: string;
+          language_dependence?: number | null;
+          max_players?: number | null;
+          min_age?: number | null;
+          min_players?: number | null;
           name: string;
           status?: Database["public"]["Enums"]["game_status"];
           updated_at?: string;
-          weight?: number | null;
         };
         Update: {
           author_id?: string;
+          bgg_id?: string | null;
+          bgg_image_url?: string | null;
+          bgg_rating?: number | null;
+          bgg_thumbnail_url?: string | null;
+          bgg_weight?: number | null;
+          bgg_year_published?: number | null;
           cover_image_id?: string | null;
           created_at?: string;
           description?: string | null;
           estimated_time?: string | null;
+          has_complete_rules?: boolean | null;
           id?: string;
+          language_dependence?: number | null;
+          max_players?: number | null;
+          min_age?: number | null;
+          min_players?: number | null;
           name?: string;
           status?: Database["public"]["Enums"]["game_status"];
           updated_at?: string;
-          weight?: number | null;
         };
         Relationships: [
           {
@@ -215,7 +319,13 @@ export type Database = {
       game_status: "draft" | "published" | "archived" | "under_review";
       image_type: "rules" | "cover" | "component" | "game_state" | "other";
       metadata_type: "rules" | "examples" | "scoring" | "pieces";
-      processing_status: "pending" | "processing" | "completed" | "error";
+      processing_status:
+        | "pending"
+        | "processing"
+        | "completed"
+        | "error"
+        | "queued"
+        | "retrying";
     };
     CompositeTypes: {
       [_ in never]: never;

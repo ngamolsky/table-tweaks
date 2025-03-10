@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { GameSearch } from "@/components/games/GameSearch";
 
 function Home() {
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold">Welcome Back!</h2>
-      <div className="grid gap-4">{/* Add your home content here */}</div>
+    <div className="space-y-8 max-w-3xl mx-auto">
+      <GameSearch />
     </div>
   );
 }
