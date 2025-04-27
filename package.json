@@ -1,7 +1,7 @@
 {
   "name": "table-tweaks",
   "private": true,
-  "version": "0.1.1",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -41,7 +41,7 @@
     "@tanstack/react-query": "^5.66.9",
     "@tanstack/react-query-devtools": "^5.66.9",
     "@tanstack/react-router": "^1.99.13",
-    "@tauri-apps/api": "^2",
+    "@tauri-apps/api": "^2.3.0",
     "@tauri-apps/plugin-shell": "^2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -65,7 +65,7 @@
     "@tanstack/eslint-plugin-query": "^5.64.2",
     "@tanstack/router-devtools": "^1.97.14",
     "@tanstack/router-plugin": "^1.95.6",
-    "@tauri-apps/cli": "^2",
+    "@tauri-apps/cli": "^2.3.1",
     "@types/node": "^22.9.0",
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",

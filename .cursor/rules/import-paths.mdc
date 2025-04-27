@@ -1,6 +1,7 @@
 ---
-description: Import Conventions
-globs: *
+description: 
+globs: 
+alwaysApply: true
 ---
  # Import Path Conventions
 

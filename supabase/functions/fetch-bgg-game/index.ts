@@ -544,7 +544,7 @@ async function importGameTags(
     await supabaseClient
         .from("game_tag_relations")
         .insert(
-            tagData.map((tag) => ({
+            tagData.map((tag: { id: string; name: string }) => ({
                 game_id: gameId,
                 tag_id: tag.id,
             })),

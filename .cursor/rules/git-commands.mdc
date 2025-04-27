@@ -1,6 +1,7 @@
 ---
-description: Git Commands and Conventions
-globs: *(
+description: 
+globs: 
+alwaysApply: true
 ---
  # Git Commands and Conventions
 

@@ -1,4 +1,4 @@
-import { Home, Plus, User } from "lucide-react";
+import { Home, User } from "lucide-react";
 
 export const navigation = [
     {
