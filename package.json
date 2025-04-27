@@ -12,7 +12,7 @@
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
     "functions": "supabase functions serve --env-file .env",
-    "functions:deploy": "supabase functions deploy openai --project-ref hbrmzzthmguxamkruuwx",
+    "functions:deploy": "supabase functions deploy --project-ref hbrmzzthmguxamkruuwx",
     "ios:dev": "tauri ios dev \"iPhone 16\"",
     "ios:build": "tauri ios build --export-method app-store-connect",
     "ios:upload": "xcrun altool --upload-app --type ios --file \"src-tauri/gen/apple/build/arm64/Table Tweaks.ipa\" --apiKey UU79N5LT3H --apiIssuer 3e0f0a88-5fc2-40b9-9849-a1b6c392c092"
